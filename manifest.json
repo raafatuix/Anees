@@ -1,0 +1,23 @@
+{
+  "name": "مُتعاهِد - رفيق مراجعة القرآن",
+  "short_name": "مُتعاهِد",
+  "description": "تطبيق متابعة ومراجعة محفوظ القرآن الكريم يومياً",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#FAF7F2",
+  "theme_color": "#D97742",
+  "dir": "rtl",
+  "lang": "ar",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

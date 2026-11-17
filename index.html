@@ -1,0 +1,3521 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" data-theme="light"><head><script data-bard-client-injected="true">(function(firebaseConfig, initialAuthToken, appId) {
+        window.__firebase_config = firebaseConfig;
+        window.__initial_auth_token = initialAuthToken;
+        window.__app_id = appId;
+            })("\n{\n  \"apiKey\": \"AIzaSyCqyCcs2R2e7AegGjvFAwG98wlamtbHvZY\",\n  \"authDomain\": \"bard-frontend.firebaseapp.com\",\n  \"projectId\": \"bard-frontend\",\n  \"storageBucket\": \"bard-frontend.firebasestorage.app\",\n  \"messagingSenderId\": \"175205271074\",\n  \"appId\": \"1:175205271074:web:2b7bd4d34d33bf38e6ec7b\"\n}\n","eyJhbGciOiJSUzI1NiIsImtpZCI6IjExNjRiNzdiNDMzZDdhMDAyMWI4NjE4YjhjYTU3ZTMyZGI5MWUxMTMiLCJ0eXAiOiJKV1QifQ.eyJzdWIiOiJmaXJlYmFzZS1hZG1pbnNkay1mYnN2Y0BiYXJkLWZyb250ZW5kLmlhbS5nc2VydmljZWFjY291bnQuY29tIiwiYXVkIjoiaHR0cHM6Ly9pZGVudGl0eXRvb2xraXQuZ29vZ2xlYXBpcy5jb20vZ29vZ2xlLmlkZW50aXR5LmlkZW50aXR5dG9vbGtpdC52MS5JZGVudGl0eVRvb2xraXQiLCJ1aWQiOiIxNDgxMDg5Njk0MDMxODUzMDQwOCIsImlzcyI6ImZpcmViYXNlLWFkbWluc2RrLWZic3ZjQGJhcmQtZnJvbnRlbmQuaWFtLmdzZXJ2aWNlYWNjb3VudC5jb20iLCJjbGFpbXMiOnsiYXBwSWQiOiJjX2UzOTM5ZjhhMjg1Mjg4YTdfaW5kZXguaHRtbC0xNjQifSwiZXhwIjoxNzk0OTExODYzLCJpYXQiOjE3OTQ5MDgyNjMsImFsZyI6IlJTMjU2In0.gBrB5DrUIdvausTHMr2gfsFb0T8Quup6oqRAzd9tPx6vCOLEvZK22fRSE673VsRISDtuYksmR-SknR8HIf1_YdFemkqfTyeqaN6JHQOmcxeh4vBfi52R1i7aV19enXcxfdOne2zSA-Nz6pk8cvpzCiVqvWYQ7af216qzqVe0t6l5Z7KknIcJsp56RrGjIM_TpSpmO5ultRETlMEnr84OjUxpuYcVwWFGSLX4VOoSxkz4rqyniL9Ee6fLsx_Sc5TjxCijZNE0lDoqMPickfrSipkqyVC3yxFhiiEeE_f5cGv8JGQFr3KV82yCVuPOj-mSOMtDO02BEd5DgIcnDOJa6A","c_e3939f8a285288a7_index.html-164")</script><script data-bard-client-injected="true">
+  document.addEventListener('input', (event) => {
+    if (event.target && (event.target.isContentEditable || event.target.hasAttribute('contenteditable'))) {
+      const clonedDoc = document.cloneNode(true);
+      const injectedScripts = clonedDoc.querySelectorAll('[data-bard-client-injected="true"]');
+      injectedScripts.forEach(el => el.remove());
+      window.parent.postMessage({
+        type: 'inlineEdit',
+        html: '<!DOCTYPE html>\n' + clonedDoc.documentElement.outerHTML
+      }, '*');
+    }
+  });
+</script><script data-bard-client-injected="true">(function(){'use strict';window.addEventListener("message",a=>{a.data&&a.data.type==="SUPPLEMENTAL_DATA_UPDATE"&&window.dispatchEvent(new CustomEvent("supplementaldataupdate",{detail:a.data.data}))});}).call(this);
+</script><script data-bard-client-injected="true">(function() {
+  const SCROLL_KEYS = new Set([
+    'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight',
+    ' ', 'Spacebar', 'PageUp', 'PageDown', 'Home', 'End',
+  ]);
+  const HORIZONTAL_KEYS = new Set(['ArrowLeft', 'ArrowRight']);
+
+  function isTextEntryTarget(target) {
+    if (!target) return false;
+    const tagName = target.tagName;
+    return tagName === 'INPUT' || tagName === 'TEXTAREA' ||
+        tagName === 'SELECT' || target.isContentEditable === true;
+  }
+
+  // An element absorbs the key only if it both overflows on the axis being
+  // scrolled and is configured to scroll on that axis. The cheap dimension
+  // test runs first because getComputedStyle forces a style recalc, and this
+  // runs on every keypress. Each axis is read from its own longhand: the
+  // 'overflow' shorthand serializes as two values when the axes differ, which
+  // is the common 'overflow-x: hidden; overflow-y: auto' pane.
+  function canScroll(node, horizontal) {
+    const overflows = horizontal ? node.scrollWidth > node.clientWidth
+                                 : node.scrollHeight > node.clientHeight;
+    if (!overflows) return false;
+    const style = window.getComputedStyle(node);
+    const overflow = horizontal ? style.overflowX : style.overflowY;
+    return overflow === 'auto' || overflow === 'scroll';
+  }
+
+  // Walks up from the event target so nested scrollers keep their behavior.
+  // <body> is included because pages that pin the root height make it the
+  // scroll container.
+  function hasScrollableAncestor(target, horizontal) {
+    let node = target;
+    while (node && node !== document.documentElement) {
+      if (canScroll(node, horizontal)) return true;
+      node = node.parentElement;
+    }
+    return false;
+  }
+
+  function rootCanScroll(horizontal) {
+    const scroller = document.scrollingElement || document.documentElement;
+    if (!scroller) return false;
+    // Tolerate a pixel of rounding so subpixel layouts do not look scrollable.
+    return horizontal ? scroller.scrollWidth > window.innerWidth + 1
+                      : scroller.scrollHeight > window.innerHeight + 1;
+  }
+
+  window.addEventListener('keydown', function(event) {
+    if (!SCROLL_KEYS.has(event.key)) return;
+    if (event.defaultPrevented) return;
+    // Alt and Meta turn arrows into browser history navigation, and Ctrl is
+    // reserved for shortcuts, so none of them are scroll intent.
+    if (event.altKey || event.metaKey || event.ctrlKey) return;
+
+    const target = event.target;
+    if (isTextEntryTarget(target)) return;
+
+    // Anything that can still absorb the scroll gets to keep it.
+    const horizontal = HORIZONTAL_KEYS.has(event.key);
+    if (rootCanScroll(horizontal)) return;
+    if (hasScrollableAncestor(target, horizontal)) return;
+
+    event.preventDefault();
+  }, {capture: true, passive: false});
+})();</script><script data-bard-client-injected="true">(function() {
+  // Ensure this script is executed only once
+  if (window.firebaseAuthBridgeScriptLoaded) {
+    return;
+  }
+  window.firebaseAuthBridgeScriptLoaded = true;
+
+  let nextTokenPromiseId = 0;
+
+  // Stores { resolve, reject } for ongoing token requests
+  const pendingTokenPromises = {};
+
+  // Listen for messages from the Host Application
+  window.addEventListener('message', function(event) {
+
+    const messageData = event.data;
+
+  if (messageData && messageData.type === 'RESOLVE_NEW_FIREBASE_TOKEN') {
+      const { success, token, error, promiseId } = messageData ?? {};
+      if (pendingTokenPromises[promiseId]) {
+        if (success) {
+          pendingTokenPromises[promiseId].resolve(token);
+        } else {
+          pendingTokenPromises[promiseId].reject(new Error(error || 'Token refresh failed from host.'));
+        }
+        delete pendingTokenPromises[promiseId];
+      }
+    }
+  });
+
+  // Expose a function for the Generated App to request a new Firebase token
+  window.requestNewFirebaseToken = function() {
+    const currentPromiseId = nextTokenPromiseId++;
+    const promise = new Promise((resolve, reject) => {
+      pendingTokenPromises[currentPromiseId] = { resolve, reject };
+    });
+    if (window.parent && window.parent !== window) {
+      window.parent.postMessage({
+        type: 'REQUEST_NEW_FIREBASE_TOKEN',
+        promiseId: currentPromiseId
+      }, '*');
+    } else {
+      pendingTokenPromises[currentPromiseId].reject(new Error('No parent window to request token from.'));
+      delete pendingTokenPromises[currentPromiseId];
+    }
+    return promise;
+  };
+})();</script><script data-bard-client-injected="true">
+let realOriginalGetUserMedia = null;
+if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+  realOriginalGetUserMedia = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
+}
+
+(function() {
+  if (navigator.mediaDevices && navigator.mediaDevices.__proto__) {
+    try {
+      Object.defineProperty(navigator.mediaDevices.__proto__, 'getUserMedia', {
+        get: function() {
+          return undefined; // Or throw an error
+        },
+        configurable: false
+      });
+    } catch (error) {
+      console.error("Error defining prototype getter:", error);
+    }
+  }
+})();
+
+(function() {
+  const pendingMediaResolvers = {};
+  let nextMediaPromiseId = 0;
+
+  function requestMediaPermissions(constraints) {
+    const mediaPromiseId = nextMediaPromiseId++;
+    const promise = new Promise((resolve, reject) => {
+      pendingMediaResolvers[mediaPromiseId] = (granted) => {
+        delete pendingMediaResolvers[mediaPromiseId];
+        resolve(granted);
+      };
+    });
+
+    window.parent.postMessage({
+      type: 'requestMediaPermission',
+      constraints: constraints,
+      promiseId: mediaPromiseId,
+    }, '*');
+
+    return promise;
+  }
+
+  let originalGetUserMedia = realOriginalGetUserMedia;
+
+  function interceptGetUserMedia() {
+    if (navigator.mediaDevices) {
+      Object.defineProperty(navigator.mediaDevices, 'getUserMedia', {
+        value: function(constraints) {
+          return requestMediaPermissions(constraints).then((granted) => {
+            if (granted) {
+              if (originalGetUserMedia) {
+                return originalGetUserMedia(constraints);
+              } else {
+                throw new Error("Original getUserMedia not available.");
+              }
+            } else {
+              throw new DOMException('Permission denied', 'NotAllowedError');
+            }
+          });
+        },
+        writable: false,
+        configurable: false
+      });
+    }
+  }
+
+  interceptGetUserMedia();
+
+  const observer = new MutationObserver(function(mutationsList, observer) {
+    for (const mutation of mutationsList) {
+      if (mutation.type === 'reconfigured' && mutation.name === 'getUserMedia' && mutation.object === navigator.mediaDevices) {
+        interceptGetUserMedia();
+      } else if (mutation.type === 'attributes' && mutation.attributeName === 'getUserMedia' && mutation.target === navigator.mediaDevices) {
+        interceptGetUserMedia();
+      } else if (mutation.type === 'childList' && mutation.addedNodes) {
+        mutation.addedNodes.forEach(node => {
+          if (node === navigator.mediaDevices) {
+            interceptGetUserMedia();
+          }
+        });
+      }
+    }
+  });
+
+  function interceptSpeechRecognition() {
+    if (!window.SpeechRecognition && !window.webkitSpeechRecognition) {
+      return;
+    }
+
+    const OriginalSpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+    const SpeechRecognitionWrapper = function(...args) {
+      const recognizer = new OriginalSpeechRecognition(...args);
+      const originalStart = recognizer.start.bind(recognizer);
+
+      recognizer.start = function() {
+        requestMediaPermissions({ audio: true }).then(granted => {
+          if (granted) {
+            originalStart();
+          } else {
+            const errorEvent = new SpeechRecognitionErrorEvent('error');
+            errorEvent.error = 'not-allowed'; // This is the standard error for permission denial.
+            recognizer.dispatchEvent(errorEvent);
+          }
+        });
+      };
+
+      return recognizer;
+    };
+
+    SpeechRecognitionWrapper.prototype = OriginalSpeechRecognition.prototype;
+    SpeechRecognitionWrapper.prototype.constructor = SpeechRecognitionWrapper;
+
+    if (window.SpeechRecognition) {
+      window.SpeechRecognition = SpeechRecognitionWrapper;
+    }
+    if (window.webkitSpeechRecognition) {
+      window.webkitSpeechRecognition = SpeechRecognitionWrapper;
+    }
+  }
+
+  interceptSpeechRecognition();
+
+  window.addEventListener('message', function(event) {
+    if (event.data) {
+      if (event.data.type === 'resolveMediaPermission') {
+        const { promiseId, granted } = event.data;
+        if (pendingMediaResolvers[promiseId]) {
+          pendingMediaResolvers[promiseId](granted);
+        }
+      }
+    }
+  });
+
+})();</script><script ws-interception-config="{&quot;parentOrigin&quot;:&quot;https://gemini.google.com&quot;,&quot;proxiedDomains&quot;:[]}" data-bard-client-injected="true">(function(){'use strict';var u=typeof Object.defineProperties=="function"?Object.defineProperty:function(b,d,e){if(b==Array.prototype||b==Object.prototype)return b;b[d]=e.value;return b};function v(b){b=["object"==typeof globalThis&&globalThis,b,"object"==typeof window&&window,"object"==typeof self&&self,"object"==typeof global&&global];for(var d=0;d<b.length;++d){var e=b[d];if(e&&e.Math==Math)return e}throw Error("Cannot find global object");}var w=v(this);
+function y(b,d){if(d)a:{var e=w;b=b.split(".");for(var h=0;h<b.length-1;h++){var k=b[h];if(!(k in e))break a;e=e[k]}b=b[b.length-1];h=e[b];d=d(h);d!=h&&d!=null&&u(e,b,{configurable:!0,writable:!0,value:d})}}function z(b){function d(h){return b.next(h)}function e(h){return b.throw(h)}return new Promise(function(h,k){function m(n){n.done?h(n.value):Promise.resolve(n.value).then(d,e).then(m,k)}m(b.next())})}y("globalThis",function(b){return b||w});/*
+
+ Copyright The Closure Library Authors.
+ SPDX-License-Identifier: Apache-2.0
+*/
+function A(b,d){function e(){}e.prototype=d.prototype;b.i=d.prototype;b.prototype=new e;b.prototype.constructor=b;b.h=function(h,k,m){for(var n=Array(arguments.length-2),p=2;p<arguments.length;p++)n[p-2]=arguments[p];return d.prototype[k].apply(h,n)}};function B(b,d,e="*"){function h(a){if(typeof a==="string")return F.encode(a).buffer;if(a instanceof ArrayBuffer)return a.slice(0);if(ArrayBuffer.isView(a))return a.buffer.slice(a.byteOffset,a.byteOffset+a.byteLength);throw Error("Invalid data type");}function k(a){a=h(a);var f={type:"send",data:new Uint8Array(a)},g;(g=r)==null||g.postMessage(f,[a])}function m(){if(!r)throw Error("Data port not captured yet.");r.onmessage=a=>{if(a.data.type==="message"){a=new MessageEvent("message",{data:G.decode(a.data.data)});
+let f;(f=c.onmessage)==null||f.call(c,a);c.dispatchEvent(a)}}}function n(){if(!t)throw Error("Control port not captured yet.");t.onmessage=a=>{switch(a.data.type){case "open":l=1;var f=new Event("open"),g;(g=c.onopen)==null||g.call(c,f);c.dispatchEvent(f);q.forEach(H=>{k(H)});q=[];break;case "close":g=a.data;l=3;g=new CloseEvent("close",{code:g.code,reason:g.reason,wasClean:g.wasClean});(f=c.onclose)==null||f.call(c,g);c.dispatchEvent(g);break;case "error":l=3;f=new Event("error");let x;(x=c.onerror)==
+null||x.call(c,f);c.dispatchEvent(f)}}}function p(a){return z(function*(){var f=new MessageChannel;t=f.port1;var g=new MessageChannel;r=g.port1;n();m();window.parent.postMessage({type:"websocket_open",portOrdering:["control","data"],url:b,protocols:a||[],connectionId:I},e,[f.port2,g.port2])}())}var c=Reflect.construct(EventTarget,[],new.target);c.CONNECTING=0;c.OPEN=1;c.CLOSING=2;c.CLOSED=3;c.url=b;c.binaryType="arraybuffer";c.protocol="";c.extensions="";var l=0,t=null,r=null,q=[],F=new TextEncoder,
+G=new TextDecoder;c.onopen=null;c.onmessage=null;c.onclose=null;c.onerror=null;Object.defineProperty(c,"readyState",{get:()=>l,enumerable:!0,configurable:!0});Object.defineProperty(c,"bufferedAmount",{get:()=>{var a=0;q.forEach(f=>{a+=typeof f==="string"?f.length:f.byteLength});return a},enumerable:!0,configurable:!0});var I=function(){var a;return((a=globalThis.crypto)==null?0:a.randomUUID)?globalThis.crypto.randomUUID():"xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g,f=>{var g=Math.random()*
+16|0;return(f==="x"?g:g&3|8).toString(16)})}();c.send=a=>{if(l===1)a instanceof Blob?a.arrayBuffer().then(f=>{k(f)}):k(a);else if(l===0)if(typeof a==="string")q.push(a);else if(a instanceof ArrayBuffer||ArrayBuffer.isView(a))q.push(h(a));else throw Error("Sending Blob is not supported before the connection is open.");else console.debug("WebSocket send called in CLOSING or CLOSED state; ignored.")};c.close=(a=1E3,f="")=>{if(l!==2&&l!==3){l=2;a={type:"close",code:a,reason:f,wasClean:a===1E3};var g;
+(g=t)==null||g.postMessage(a)}};Promise.resolve().then(()=>p(d));return c}A(B,EventTarget);var C=document.currentScript,D=C==null?void 0:C.getAttribute("ws-interception-config");if(!D)throw Error("WebSocket Interceptor: Missing ws-interception-config attribute in the script tag.");var E=JSON.parse(D);if(!E.parentOrigin||typeof E.parentOrigin!=="string")throw Error("WebSocket Interceptor: Invalid parentOrigin in ws-interception-config");
+(function(b){var d=Object.getOwnPropertyDescriptor(window,"WebSocket");if(!d||d.writable||d.configurable)d=Object.assign(function(e,h){try{let k=(new URL(e)).hostname;if(b.proxiedDomains.some(m=>k===m||k.endsWith(`.${m}`)))return new B(e,h,b.parentOrigin)}catch(k){throw window.parent.postMessage({type:"websocket_blocked",url:e,reason:"blocked_invalid_url"},b.parentOrigin),new DOMException(`WebSocket connection to '${e}' is not allowed in Canvas.`,"SecurityError");}window.parent.postMessage({type:"websocket_blocked",
+url:e,reason:"blocked_domain_not_allowlisted"},b.parentOrigin);throw new DOMException(`WebSocket connection to '${e}' is not allowed in Canvas.`,"SecurityError");},{CONNECTING:0,OPEN:1,CLOSING:2,CLOSED:3}),Object.defineProperty(window,"WebSocket",{value:d,writable:!1,configurable:!1})})({proxiedDomains:E.proxiedDomains||[],parentOrigin:E.parentOrigin});}).call(this);
+</script><script data-bard-client-injected="true">((function(modelInformation) {
+  const originalFetch = window.fetch;
+  // TODO: b/421908508 - Move these out of the script and match all generative AI model calls.
+  let googleLlmBaseApiUrls = [
+    'https://generativelanguage.googleapis.com/v1beta/models/' + modelInformation.textModelName + ':streamGenerateContent',
+    'https://generativelanguage.googleapis.com/v1beta/models/' + modelInformation.textModelName + ':generateContent',
+    'https://generativelanguage.googleapis.com/v1beta/models/' + modelInformation.imageModelName + ':predict',
+    'https://generativelanguage.googleapis.com/v1beta/models/' + modelInformation.imageModelName + ':predictLongRunning',
+    'https://generativelanguage.googleapis.com/v1beta/models/' + modelInformation.imageEditModelName + ':generateContent',
+    'https://generativelanguage.googleapis.com/v1beta/models/' + modelInformation.imageTransformModelName + ':generateContent',
+    'https://generativelanguage.googleapis.com/v1beta/models/' + modelInformation.videoModelName + ':predict',
+    'https://generativelanguage.googleapis.com/v1beta/models/' + modelInformation.videoModelName + ':predictLongRunning',
+    'https://generativelanguage.googleapis.com/v1beta/models/' + modelInformation.ttsModelName + ':generateContent',
+  ];
+  modelInformation.deprecatedTextModelNames.forEach((modelName) => {
+    googleLlmBaseApiUrls.push(
+      'https://generativelanguage.googleapis.com/v1beta/models/' + modelName + ':streamGenerateContent',
+      'https://generativelanguage.googleapis.com/v1beta/models/' + modelName + ':generateContent',
+    );
+  });
+  modelInformation.deprecatedImageModelNames.forEach((modelName) => {
+    googleLlmBaseApiUrls.push(
+      'https://generativelanguage.googleapis.com/v1beta/models/' + modelName + ':predict',
+      'https://generativelanguage.googleapis.com/v1beta/models/' + modelName + ':predictLongRunning',
+      'https://generativelanguage.googleapis.com/v1beta/models/' + modelName + ':generateContent',
+      'https://generativelanguage.googleapis.com/v1beta/models/' + modelName + ':streamGenerateContent',
+    );
+  });
+  modelInformation.deprecatedGenerateImageModelNames.forEach((modelName) => {
+    googleLlmBaseApiUrls.push(
+      'https://generativelanguage.googleapis.com/v1beta/models/' + modelName + ':generateContent',
+      'https://generativelanguage.googleapis.com/v1beta/models/' + modelName + ':streamGenerateContent',
+    );
+  });
+  modelInformation.deprecatedImageTransformModelNames.forEach((modelName) => {
+    googleLlmBaseApiUrls.push(
+      'https://generativelanguage.googleapis.com/v1beta/models/' + modelName + ':generateContent',
+      'https://generativelanguage.googleapis.com/v1beta/models/' + modelName + ':streamGenerateContent',
+    );
+  });
+
+  const pendingFetchResolvers = {};
+  let nextPromiseId = 0;
+
+  function handleStringInput(input, optionsArgument) {
+    const actualUrl = input;
+    const fetchCallArgs = [actualUrl, optionsArgument];
+    const effectiveOptions = optionsArgument || {};
+    const bodyForApiKeyCheck = effectiveOptions.body;
+    const bodyForPostMessage = effectiveOptions.body;
+    return { actualUrl, fetchCallArgs, effectiveOptions, bodyForApiKeyCheck, bodyForPostMessage };
+  }
+
+  function handleRequestInput(input, optionsArgument) {
+    const actualUrl = input.url;
+    const fetchCallArgs = [input, optionsArgument];
+    const effectiveOptions = { method: input.method, headers: new Headers(input.headers) };
+    let bodyForApiKeyCheck;
+    let bodyForPostMessage;
+
+    if (optionsArgument) {
+      if (optionsArgument.method) effectiveOptions.method = optionsArgument.method;
+      if (optionsArgument.headers) effectiveOptions.headers = new Headers(optionsArgument.headers);
+      if ('body' in optionsArgument) {
+        bodyForApiKeyCheck = optionsArgument.body;
+        bodyForPostMessage = optionsArgument.body;
+      } else {
+        bodyForApiKeyCheck = undefined;
+        bodyForPostMessage = input.body;
+      }
+    } else {
+      bodyForApiKeyCheck = undefined;
+      bodyForPostMessage = input.body;
+    }
+    return { actualUrl, fetchCallArgs, effectiveOptions, bodyForApiKeyCheck, bodyForPostMessage };
+  }
+
+  window.fetch = function(input, optionsArgument) {
+    let actualUrl;
+    let fetchCallArgs;
+    let effectiveOptions = {};
+    let bodyForApiKeyCheck;
+    let bodyForPostMessage;
+
+    if (typeof input === 'string') {
+      ({actualUrl, fetchCallArgs, effectiveOptions, bodyForApiKeyCheck, bodyForPostMessage} = handleStringInput(input, optionsArgument));
+    } else if (input instanceof Request) {
+      ({actualUrl, fetchCallArgs, effectiveOptions, bodyForApiKeyCheck, bodyForPostMessage} = handleRequestInput(input, optionsArgument));
+    } else {
+      return originalFetch.apply(window, [input, optionsArgument]);
+    }
+
+    effectiveOptions.method = effectiveOptions.method || 'GET';
+    if (!effectiveOptions.headers) {
+      effectiveOptions.headers = new Headers();
+    }
+
+
+    if (typeof actualUrl === 'string' && googleLlmBaseApiUrls.some((url) => actualUrl.startsWith(url))) {
+      let apiKeyIsNull = true;
+
+      const regex = new RegExp("models/([^:]+)");
+      const modelNameMatch = actualUrl.match(regex);
+      const modelName = modelNameMatch ? modelNameMatch[1] : 'unspecified';
+
+
+      try {
+        const urlObject = new URL(actualUrl);  // Use URL object for robust parsing
+        const apiKeyParam = urlObject.searchParams.get('key');
+        if (apiKeyParam) {
+          apiKeyIsNull = false;
+        }
+      } catch (e) {
+        // Continue checks even if URL parsing fails
+      }
+
+      if (apiKeyIsNull && effectiveOptions.headers) {
+        const h = new Headers(effectiveOptions.headers);
+        const apiKeyHeaderValue = h.get('X-API-Key') || h.get('x-api-key');
+        if (apiKeyHeaderValue) {
+          apiKeyIsNull = false;
+          return originalFetch.apply(window, fetchCallArgs);
+        }
+      }
+
+      if (apiKeyIsNull && effectiveOptions.method && ['POST', 'PUT', 'PATCH'].includes(effectiveOptions.method.toUpperCase()) && typeof bodyForApiKeyCheck === 'string') {
+        try {
+          const bodyData = JSON.parse(bodyForApiKeyCheck);
+          if (bodyData && bodyData.apiKey) {
+            apiKeyIsNull = false;
+            return originalFetch.apply(window, fetchCallArgs);
+          }
+        } catch (e) {
+          // Ignore JSON parsing errors
+        }
+      }
+
+      if(apiKeyIsNull) {
+        const promiseId = nextPromiseId++;
+        const promise = new Promise((resolve) => {
+          pendingFetchResolvers[promiseId] = (resolvedResponse) => {
+            delete pendingFetchResolvers[promiseId];
+            resolve(resolvedResponse);
+          };
+        });
+
+        let serializedBodyForPostMessage;
+        if (typeof bodyForPostMessage === 'string' || bodyForPostMessage == null) {
+            serializedBodyForPostMessage = bodyForPostMessage;
+        } else if (bodyForPostMessage instanceof ReadableStream) {
+            serializedBodyForPostMessage = null;
+        } else {
+            try {
+                serializedBodyForPostMessage = JSON.stringify(bodyForPostMessage);
+            } catch (e) {
+                serializedBodyForPostMessage = null;
+            }
+        }
+
+        const messageOptions = {
+            method: effectiveOptions.method,
+            headers: Object.fromEntries(new Headers(effectiveOptions.headers).entries()),
+            body: serializedBodyForPostMessage
+        };
+
+        window.parent.postMessage({
+          type: 'requestFetch',
+          url: actualUrl,
+          modelName: modelName,
+          options: messageOptions,
+          promiseId: promiseId,
+        }, '*');
+
+        return promise;
+      }
+      return originalFetch.apply(window, fetchCallArgs);
+    }
+    return originalFetch.apply(window, fetchCallArgs);
+  };
+
+  window.addEventListener('message', function(event) {
+    if (event.data && event.data.type === 'resolveFetch') {
+      const { promiseId, response } = event.data;
+      if (pendingFetchResolvers[promiseId]) {
+        try {
+          const reconstructedResponse = new Response(response.body, {
+            status: response.status,
+            statusText: response.statusText,
+            headers: new Headers(response.headers),
+          });
+          pendingFetchResolvers[promiseId](reconstructedResponse);
+        } catch (error) {
+          pendingFetchResolvers[promiseId](new Response(null, { status: 500, statusText: "Interceptor Response Reconstruction Error" }));
+        }
+      }
+    }
+  });
+
+}))({"textModelName":"gemini-3-flash-preview","imageModelName":"imagen-4.0-generate-001","imageEditModelName":"gemini-3.1-flash-image","imageTransformModelName":"gemini-3-pro-image","videoModelName":"veo-2.0-generate-001","ttsModelName":"gemini-2.5-flash-preview-tts","deprecatedTextModelNames":["gemini-2.0-flash","gemini-2.5-flash","gemini-2.5-flash-preview-04-17","gemini-2.5-flash-preview-05-20","gemini-2.5-flash-preview-09-2025"],"deprecatedImageModelNames":["imagen-3.0-generate-001","imagen-3.0-generate-002"],"deprecatedGenerateImageModelNames":["gemini-2.5-flash-image-preview","gemini-2.5-flash-image","gemini-3.1-flash-image-preview"],"deprecatedImageTransformModelNames":["gemini-3-pro-image-preview-11-2025"]})</script><script data-bard-client-injected="true">(function() {
+  const OVERLAY_SELECTOR =
+    'dialog[open], [role="dialog"], [role="alertdialog"], [role="menu"], [role="listbox"], [role="combobox"]';
+
+  function isVisibleOverlay(element) {
+    if (element.closest('[hidden], [aria-hidden="true"], [inert]')) {
+      return false;
+    }
+    if (window.getComputedStyle(element).visibility === 'hidden') {
+      return false;
+    }
+    for (let cur = element; cur; cur = cur.parentElement) {
+      if (window.getComputedStyle(cur).display === 'none') {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  function hasOpenOverlay() {
+    const candidates = document.querySelectorAll(OVERLAY_SELECTOR);
+    for (let i = 0; i < candidates.length; i++) {
+      if (isVisibleOverlay(candidates[i])) {
+        return true;
+      }
+    }
+    try {
+      if (document.querySelector('[popover]:popover-open')) {
+        return true;
+      }
+    } catch (e) {
+      // Ignore engines that do not support :popover-open.
+    }
+    return false;
+  }
+
+  function isNonEmptySearchInput(target) {
+    return (
+      Boolean(target) &&
+      target.tagName === 'INPUT' &&
+      typeof target.type === 'string' &&
+      target.type.toLowerCase() === 'search' &&
+      typeof target.value === 'string' &&
+      target.value.length > 0
+    );
+  }
+
+  function shouldIgnoreEscape(event) {
+    return (
+      event.key !== 'Escape' ||
+      event.altKey ||
+      event.ctrlKey ||
+      event.metaKey ||
+      event.shiftKey ||
+      event.isComposing ||
+      event.repeat ||
+      event.keyCode === 229 ||
+      isNonEmptySearchInput(event.target)
+    );
+  }
+
+  let shouldIgnoreCaptureState = false;
+
+  window.addEventListener(
+    'keydown',
+    function(event) {
+      if (event.key === 'Escape') {
+        shouldIgnoreCaptureState =
+          hasOpenOverlay() || isNonEmptySearchInput(event.target);
+      }
+    },
+    {capture: true},
+  );
+
+  window.addEventListener('keydown', function(event) {
+    if (
+      shouldIgnoreEscape(event) ||
+      event.defaultPrevented ||
+      shouldIgnoreCaptureState
+    ) {
+      return;
+    }
+    const wasBlockedOnCapture = shouldIgnoreCaptureState;
+    queueMicrotask(function() {
+      if (event.defaultPrevented || wasBlockedOnCapture) {
+        return;
+      }
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({'type': 'escapeKey'}, '*');
+      }
+    });
+  });
+})();</script><script data-bard-client-injected="true">(function() {
+  function normalizeSlug(str) {
+    try {
+      return str
+        .trim()
+        .toLowerCase()
+        .replace(/[^p{L}p{N}s_-]/gu, '')
+        .replace(/s+/g, '-');
+    } catch (e) {
+      return str
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9s_-]/g, '')
+        .replace(/s+/g, '-');
+    }
+  }
+
+  function findTargetElement(hash) {
+    if (!hash || hash === '#') {
+      return null;
+    }
+    const rawId = hash.startsWith('#') ? hash.slice(1) : hash;
+    let decodedId = rawId;
+    try {
+      decodedId = decodeURIComponent(rawId);
+    } catch (e) {
+      // Ignore URI malformed errors.
+    }
+
+    // 1. Direct ID match (raw and decoded).
+    let target = document.getElementById(rawId) || document.getElementById(decodedId);
+    if (target) {
+      return target;
+    }
+
+    // 2. Name attribute match (<a name="...">).
+    try {
+      if (typeof CSS !== 'undefined' && CSS.escape) {
+        target =
+          document.querySelector('[name="' + CSS.escape(rawId) + '"]') ||
+          document.querySelector('[name="' + CSS.escape(decodedId) + '"]');
+      } else {
+        const namedElements = document.getElementsByName(rawId);
+        if (namedElements && namedElements.length > 0) {
+          return namedElements[0];
+        }
+      }
+    } catch (e) {
+      // Ignore querySelector syntax errors.
+    }
+    if (target) {
+      return target;
+    }
+
+    // 3. Match heading text by slug (for Markdown TOCs where headings lack explicit IDs).
+    const targetSlug = normalizeSlug(decodedId);
+    if (targetSlug) {
+      for (const heading of document.querySelectorAll('h1, h2, h3, h4, h5, h6')) {
+        if (normalizeSlug(heading.textContent || '') === targetSlug) {
+          return heading;
+        }
+      }
+    }
+
+    return null;
+  }
+
+  document.addEventListener('click', function(event) {
+    const target = event.target;
+    const anchor = target && typeof target.closest === 'function' ? target.closest('a') : null;
+    if (!anchor) {
+      return;
+    }
+
+    const href = anchor.getAttribute('href');
+    if (
+      !href ||
+      href.trim().toLowerCase().startsWith('javascript:') ||
+      anchor.hasAttribute('download')
+    ) {
+      return;
+    }
+
+    // Check if the link is an in-page hash / anchor link.
+    if (href.startsWith('#')) {
+      event.preventDefault();
+      const targetElement = findTargetElement(href);
+      if (targetElement) {
+        targetElement.scrollIntoView({behavior: 'smooth', block: 'start'});
+      }
+      return;
+    }
+
+    // Check if the URL has the same origin/pathname but with a hash.
+    try {
+      const url = new URL(anchor.href, window.location.href);
+      if (
+        url.hash &&
+        url.origin === window.location.origin &&
+        url.pathname === window.location.pathname
+      ) {
+        event.preventDefault();
+        const targetElement = findTargetElement(url.hash);
+        if (targetElement) {
+          targetElement.scrollIntoView({behavior: 'smooth', block: 'start'});
+        }
+        return;
+      }
+    } catch (e) {
+      // Fall through if URL parsing fails.
+    }
+
+    // For all external or full navigation links, prevent iframe-level navigation
+    // (which breaks in AGSA WebView or sandboxed iframes) and ensure they open
+    // safely in a new tab/window.
+    if (anchor.target !== '_blank') {
+      event.preventDefault();
+      window.open(anchor.href, '_blank', 'noopener,noreferrer');
+    }
+  }, {capture: true});
+})();</script><script data-bard-client-injected="true">(function(){'use strict';function a(){window.parent.postMessage({type:"interaction"},"*")}window.addEventListener("click",a,{capture:!0,passive:!0});window.addEventListener("touchstart",a,{capture:!0,passive:!0});window.addEventListener("keydown",a,{capture:!0,passive:!0});}).call(this);
+</script><script data-bard-client-injected="true">(function() {
+  const originalConsoleLog = console.log;
+  const originalConsoleError = console.error;
+
+    /**
+   * Normalizes an error event or a promise rejection reason into a structured error object.
+   * @param {*} errorEventOrReason The error object or reason.
+   * @return {object} Structured error data { message, name, stack }.
+   */
+  function getErrorObject(errorEventOrReason) {
+    if (errorEventOrReason instanceof Error) {
+      return {
+        message: errorEventOrReason.message,
+        name: errorEventOrReason.name,
+        stack: errorEventOrReason.stack,
+      };
+    }
+    // Fallback for non-Error objects.
+    try {
+      return {
+        message: JSON.stringify(errorEventOrReason),
+        name: 'UnknownErrorType',
+        stack: null,
+      };
+    } catch (e) {
+      return {
+        message: String(errorEventOrReason),
+        name: 'UnknownErrorTypeNonStringifiable',
+        stack: null,
+      };
+    }
+  }
+
+  /**
+   * Converts an array of arguments (from log/error) into a single string.
+   * Handles Error objects specially to include their message and stack.
+   * @param {Array<*>} args - Arguments passed to console methods.
+   * @return {string} A string representation of the arguments.
+   */
+  function stringifyArgs(args) {
+    return args
+      .map((arg) => {
+        if (arg instanceof Error) {
+          const {message, stack} = arg;
+          return `Error: ${message}${stack ? ('\nStack: ' + stack) : ''}`;
+        }
+        if (typeof arg === 'object' && arg !== null) {
+          try {
+            return JSON.stringify(arg);
+          } catch (error) {
+            return '[Circular Object]';
+          }
+        } else {
+          return String(arg);
+        }
+      })
+      .join(' ');
+  }
+
+  console.log = function(...args) {
+    const logString = stringifyArgs(args);
+    window.parent.postMessage({ type: 'log', message: logString }, '*');
+    originalConsoleLog.apply(console, args);
+  };
+
+  console.error = function(...args) {
+    let errorData;
+    if (args.length > 0 && args[0] instanceof Error) {
+      const err = args[0];
+      // If the first arg is an Error, capture its details.
+      errorData = {
+        type: 'error',
+        source: 'CONSOLE_ERROR',
+        ...getErrorObject(err),
+        rawArgsString: stringifyArgs(args.slice(1)),
+        timestamp: new Date().toISOString(),
+      };
+    } else {
+      // If not an Error object, treat all args as a general error message.
+      errorData = {
+        type: 'error',
+        source: 'CONSOLE_ERROR',
+        message: stringifyArgs(args),
+        name: 'ConsoleLoggedError',
+        stack: null,
+        timestamp: new Date().toISOString(),
+      };
+    }
+    window.parent.postMessage(errorData, '*');
+    originalConsoleError.apply(console, args);
+  };
+
+  // Listen for global unhandled synchronous errors.
+  window.addEventListener('error', function(event) {
+    const errorDetails = event.error ? getErrorObject(event.error) : {
+      message: event.message,
+      name: 'GlobalError',
+      stack: null,
+      filename: event.filename,
+      lineno: event.lineno,
+      colno: event.colno,
+    };
+
+    window.parent.postMessage({
+      type: 'error',
+      source: 'global',
+      ...errorDetails,
+      message: errorDetails.message || event.message,
+      timestamp: new Date().toISOString(),
+    }, '*');
+  });
+
+  // Listen for unhandled promise rejections (asynchronous errors).
+  window.addEventListener('unhandledrejection', function(event) {
+    const errorDetails = getErrorObject(event.reason);
+
+    window.parent.postMessage({
+      type: 'error',
+      source: 'unhandledrejection',
+      ...errorDetails,
+      message: errorDetails.message || 'Unhandled Promise Rejection',
+      timestamp: new Date().toISOString(),
+    }, '*');
+  });
+
+})();</script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>مُراجِع القرآن | رفيقك اليومي لمراجعة المحفوظ</title>
+
+  <!-- PWA & Mobile Home Screen Meta Tags -->
+  <meta name="theme-color" content="#D97742">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="مُراجِع القرآن">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="description" content="تطبيق ذكي لتنظيم الحفظ والمراجعة اليومية لأرباع القرآن الكريم">
+
+  <!-- PWA Manifest & Icons -->
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='24' fill='%23D97742'/%3E%3Cpath d='M25 30c0-4 3-7 7-7h14c3 0 4 2 4 4v44c0-2-2-4-5-4H32c-4 0-7 3-7 7V30zm50 0c0-4-3-7-7-7H54c-3 0-4 2-4 4v44c0-2 2-4 5-4h13c4 0 7 3 7 7V30z' fill='%23FAF7F2'/%3E%3C/svg%3E">
+  <link rel="apple-touch-icon" href="icon-192.png">
+
+  <!-- Google Fonts: IBM Plex Sans Arabic & Amiri -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&amp;family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+    /* =========================================================================
+       ISLAMIC APP & DASHBOARD DESIGN SYSTEM TOKENS
+       ========================================================================= */
+    :root {
+      --bg-canvas: #FAF7F2;
+      --bg-surface: #FFFFFF;
+      --bg-surface-alt: #F3EDE2;
+
+      --color-primary: #D97742;
+      --color-primary-hover: #C26533;
+      --color-primary-soft: #F6E5DA;
+
+      --text-primary: #26211D;
+      --text-secondary: #6E655F;
+
+      --border-subtle: #E6DFD5;
+      --shadow-card: 0px 4px 20px rgba(38, 33, 29, 0.04);
+
+      --color-success: #4A7C59;
+      --bg-success-soft: #E8F1EB;
+      --color-warning: #D49A3A;
+      --bg-warning-soft: #FBF3E4;
+      --color-error: #C85A53;
+      --bg-error-soft: #F9EAE9;
+      --color-info: #4F759B;
+      --bg-info-soft: #E9EFF5;
+    }
+
+    [data-theme="dark"] {
+      --bg-canvas: #161311;
+      --bg-surface: #211D1A;
+      --bg-surface-alt: #2B2622;
+
+      --color-primary: #E58956;
+      --color-primary-hover: #EE9B6D;
+      --color-primary-soft: #36251C;
+
+      --text-primary: #F2ECE4;
+      --text-secondary: #A39990;
+
+      --border-subtle: #332D28;
+      --shadow-card: 0px 4px 20px rgba(0, 0, 0, 0.25);
+
+      --color-success: #6CA37C;
+      --bg-success-soft: #1C2B21;
+      --color-warning: #E6B055;
+      --bg-warning-soft: #2E2516;
+      --color-error: #E07770;
+      --bg-error-soft: #2E1A19;
+      --color-info: #7399BF;
+      --bg-info-soft: #1A242E;
+    }
+
+    * {
+      -webkit-tap-highlight-color: transparent;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'IBM Plex Sans Arabic', system-ui, -apple-system, sans-serif;
+      background-color: var(--bg-canvas);
+      color: var(--text-primary);
+      overscroll-behavior-y: contain;
+      transition: background-color 0.25s ease, color 0.25s ease;
+    }
+
+    .font-quran {
+      font-family: 'Amiri', serif;
+      line-height: 1.75;
+    }
+
+    .tabular-nums {
+      font-variant-numeric: tabular-nums;
+    }
+
+    ::-webkit-scrollbar {
+      width: 5px;
+      height: 5px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: var(--border-subtle);
+      border-radius: 9999px;
+    }
+
+    .ds-canvas { background-color: var(--bg-canvas); }
+    .ds-surface {
+      background-color: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      box-shadow: var(--shadow-card);
+    }
+    .ds-surface-alt {
+      background-color: var(--bg-surface-alt);
+      border: 1px solid var(--border-subtle);
+    }
+    .ds-text-primary { color: var(--text-primary); }
+    .ds-text-secondary { color: var(--text-secondary); }
+    .ds-border { border-color: var(--border-subtle); }
+
+    .ds-btn-primary {
+      background-color: var(--color-primary);
+      color: #FFFFFF;
+      transition: all 0.2s ease;
+    }
+    .ds-btn-primary:hover {
+      background-color: var(--color-primary-hover);
+    }
+    .ds-btn-primary:active {
+      transform: scale(0.98);
+    }
+
+    .ds-btn-soft {
+      background-color: var(--color-primary-soft);
+      color: var(--color-primary);
+      transition: all 0.2s ease;
+    }
+    .ds-btn-soft:active {
+      transform: scale(0.98);
+    }
+
+    .ds-card-completed {
+      background-color: var(--bg-success-soft);
+      border-color: var(--color-success);
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes slideUpSheet {
+      from { transform: translateY(100%); }
+      to { transform: translateY(0); }
+    }
+    @keyframes slideDownSheet {
+      from { transform: translateY(0); }
+      to { transform: translateY(100%); }
+    }
+    .animate-fade-in {
+      animation: fadeIn 0.25s ease-out forwards;
+    }
+    .bottom-sheet-enter {
+      animation: slideUpSheet 0.32s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    }
+    .bottom-sheet-exit {
+      animation: slideDownSheet 0.24s cubic-bezier(0.4, 0, 1, 1) forwards;
+    }
+
+    .pb-safe {
+      padding-bottom: calc(6rem + env(safe-area-inset-bottom, 0px));
+    }
+    .bottom-nav-safe {
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+    }
+  </style>
+<style>*, ::before, ::after{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgb(59 130 246 / 0.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }::backdrop{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgb(59 130 246 / 0.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }/* ! tailwindcss v3.4.17 | MIT License | https://tailwindcss.com */*,::after,::before{box-sizing:border-box;border-width:0;border-style:solid;border-color:#e5e7eb}::after,::before{--tw-content:''}:host,html{line-height:1.5;-webkit-text-size-adjust:100%;-moz-tab-size:4;tab-size:4;font-family:ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";font-feature-settings:normal;font-variation-settings:normal;-webkit-tap-highlight-color:transparent}body{margin:0;line-height:inherit}hr{height:0;color:inherit;border-top-width:1px}abbr:where([title]){-webkit-text-decoration:underline dotted;text-decoration:underline dotted}h1,h2,h3,h4,h5,h6{font-size:inherit;font-weight:inherit}a{color:inherit;text-decoration:inherit}b,strong{font-weight:bolder}code,kbd,pre,samp{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;font-feature-settings:normal;font-variation-settings:normal;font-size:1em}small{font-size:80%}sub,sup{font-size:75%;line-height:0;position:relative;vertical-align:baseline}sub{bottom:-.25em}sup{top:-.5em}table{text-indent:0;border-color:inherit;border-collapse:collapse}button,input,optgroup,select,textarea{font-family:inherit;font-feature-settings:inherit;font-variation-settings:inherit;font-size:100%;font-weight:inherit;line-height:inherit;letter-spacing:inherit;color:inherit;margin:0;padding:0}button,select{text-transform:none}button,input:where([type=button]),input:where([type=reset]),input:where([type=submit]){-webkit-appearance:button;background-color:transparent;background-image:none}:-moz-focusring{outline:auto}:-moz-ui-invalid{box-shadow:none}progress{vertical-align:baseline}::-webkit-inner-spin-button,::-webkit-outer-spin-button{height:auto}[type=search]{-webkit-appearance:textfield;outline-offset:-2px}::-webkit-search-decoration{-webkit-appearance:none}::-webkit-file-upload-button{-webkit-appearance:button;font:inherit}summary{display:list-item}blockquote,dd,dl,figure,h1,h2,h3,h4,h5,h6,hr,p,pre{margin:0}fieldset{margin:0;padding:0}legend{padding:0}menu,ol,ul{list-style:none;margin:0;padding:0}dialog{padding:0}textarea{resize:vertical}input::placeholder,textarea::placeholder{opacity:1;color:#9ca3af}[role=button],button{cursor:pointer}:disabled{cursor:default}audio,canvas,embed,iframe,img,object,svg,video{display:block;vertical-align:middle}img,video{max-width:100%;height:auto}[hidden]:where(:not([hidden=until-found])){display:none}.pointer-events-none{pointer-events:none}.pointer-events-auto{pointer-events:auto}.fixed{position:fixed}.absolute{position:absolute}.relative{position:relative}.sticky{position:sticky}.inset-0{inset:0px}.-left-1{left:-0.25rem}.-top-1{top:-0.25rem}.bottom-0{bottom:0px}.bottom-20{bottom:5rem}.left-0{left:0px}.left-1\/2{left:50%}.right-0{right:0px}.top-0{top:0px}.top-20{top:5rem}.z-20{z-index:20}.z-30{z-index:30}.z-40{z-index:40}.z-50{z-index:50}.z-\[60\]{z-index:60}.mx-auto{margin-left:auto;margin-right:auto}.mb-2{margin-bottom:0.5rem}.mb-4{margin-bottom:1rem}.mb-5{margin-bottom:1.25rem}.mt-0\.5{margin-top:0.125rem}.mb-6{margin-bottom:1.5rem}.mt-2{margin-top:0.5rem}.mb-1\.5{margin-bottom:0.375rem}.mr-1{margin-right:0.25rem}.flex{display:flex}.grid{display:grid}.hidden{display:none}.h-1\.5{height:0.375rem}.h-11{height:2.75rem}.h-14{height:3.5rem}.h-16{height:4rem}.h-4{height:1rem}.h-5{height:1.25rem}.h-6{height:1.5rem}.h-7{height:1.75rem}.h-8{height:2rem}.h-9{height:2.25rem}.max-h-\[88vh\]{max-height:88vh}.min-h-screen{min-height:100vh}.w-11{width:2.75rem}.w-14{width:3.5rem}.w-4{width:1rem}.w-5{width:1.25rem}.w-6{width:1.5rem}.w-7{width:1.75rem}.w-full{width:100%}.w-16{width:4rem}.w-8{width:2rem}.w-9{width:2.25rem}.max-w-lg{max-width:32rem}.max-w-sm{max-width:24rem}.flex-1{flex:1 1 0%}.shrink-0{flex-shrink:0}.-translate-x-1\/2{--tw-translate-x:-50%;transform:translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}.cursor-grab{cursor:grab}.select-none{-webkit-user-select:none;user-select:none}.grid-cols-3{grid-template-columns:repeat(3, minmax(0, 1fr))}.grid-cols-2{grid-template-columns:repeat(2, minmax(0, 1fr))}.flex-col{flex-direction:column}.items-center{align-items:center}.justify-start{justify-content:flex-start}.justify-end{justify-content:flex-end}.justify-center{justify-content:center}.justify-between{justify-content:space-between}.gap-1{gap:0.25rem}.gap-1\.5{gap:0.375rem}.gap-2{gap:0.5rem}.gap-3{gap:0.75rem}.gap-2\.5{gap:0.625rem}.space-y-4 > :not([hidden]) ~ :not([hidden]){--tw-space-y-reverse:0;margin-top:calc(1rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(1rem * var(--tw-space-y-reverse))}.space-y-5 > :not([hidden]) ~ :not([hidden]){--tw-space-y-reverse:0;margin-top:calc(1.25rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(1.25rem * var(--tw-space-y-reverse))}.space-y-2\.5 > :not([hidden]) ~ :not([hidden]){--tw-space-y-reverse:0;margin-top:calc(0.625rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(0.625rem * var(--tw-space-y-reverse))}.space-y-3 > :not([hidden]) ~ :not([hidden]){--tw-space-y-reverse:0;margin-top:calc(0.75rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(0.75rem * var(--tw-space-y-reverse))}.overflow-y-auto{overflow-y:auto}.rounded-2xl{border-radius:1rem}.rounded-3xl{border-radius:1.5rem}.rounded-full{border-radius:9999px}.rounded-xl{border-radius:0.75rem}.rounded-t-\[28px\]{border-top-left-radius:28px;border-top-right-radius:28px}.border{border-width:1px}.border-b{border-bottom-width:1px}.border-t{border-top-width:1px}.bg-black\/50{background-color:rgb(0 0 0 / 0.5)}.p-2{padding:0.5rem}.p-2\.5{padding:0.625rem}.p-4{padding:1rem}.p-5{padding:1.25rem}.p-7{padding:1.75rem}.p-3{padding:0.75rem}.px-1\.5{padding-left:0.375rem;padding-right:0.375rem}.px-3{padding-left:0.75rem;padding-right:0.75rem}.px-4{padding-left:1rem;padding-right:1rem}.px-5{padding-left:1.25rem;padding-right:1.25rem}.py-1\.5{padding-top:0.375rem;padding-bottom:0.375rem}.py-2{padding-top:0.5rem;padding-bottom:0.5rem}.py-3\.5{padding-top:0.875rem;padding-bottom:0.875rem}.py-3{padding-top:0.75rem;padding-bottom:0.75rem}.py-2\.5{padding-top:0.625rem;padding-bottom:0.625rem}.pb-12{padding-bottom:3rem}.pb-3{padding-bottom:0.75rem}.pb-8{padding-bottom:2rem}.pr-0\.5{padding-right:0.125rem}.pt-3{padding-top:0.75rem}.pt-4{padding-top:1rem}.text-center{text-align:center}.text-right{text-align:right}.text-\[10px\]{font-size:10px}.text-\[11px\]{font-size:11px}.text-base{font-size:1rem;line-height:1.5rem}.text-lg{font-size:1.125rem;line-height:1.75rem}.text-sm{font-size:0.875rem;line-height:1.25rem}.text-xs{font-size:0.75rem;line-height:1rem}.text-xl{font-size:1.25rem;line-height:1.75rem}.font-bold{font-weight:700}.font-medium{font-weight:500}.tabular-nums{--tw-numeric-spacing:tabular-nums;font-variant-numeric:var(--tw-ordinal) var(--tw-slashed-zero) var(--tw-numeric-figure) var(--tw-numeric-spacing) var(--tw-numeric-fraction)}.leading-relaxed{line-height:1.625}.tracking-tight{letter-spacing:-0.025em}.text-white{--tw-text-opacity:1;color:rgb(255 255 255 / var(--tw-text-opacity, 1))}.opacity-40{opacity:0.4}.shadow-2xl{--tw-shadow:0 25px 50px -12px rgb(0 0 0 / 0.25);--tw-shadow-colored:0 25px 50px -12px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.shadow-xl{--tw-shadow:0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);--tw-shadow-colored:0 20px 25px -5px var(--tw-shadow-color), 0 8px 10px -6px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.backdrop-blur-md{--tw-backdrop-blur:blur(12px);-webkit-backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia);backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia)}.backdrop-blur-sm{--tw-backdrop-blur:blur(4px);-webkit-backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia);backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia)}.transition{transition-property:color, background-color, border-color, fill, stroke, opacity, box-shadow, transform, filter, -webkit-text-decoration-color, -webkit-backdrop-filter;transition-property:color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;transition-property:color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter, -webkit-text-decoration-color, -webkit-backdrop-filter;transition-timing-function:cubic-bezier(0.4, 0, 0.2, 1);transition-duration:150ms}.transition-opacity{transition-property:opacity;transition-timing-function:cubic-bezier(0.4, 0, 0.2, 1);transition-duration:150ms}.transition-transform{transition-property:transform;transition-timing-function:cubic-bezier(0.4, 0, 0.2, 1);transition-duration:150ms}.duration-200{transition-duration:200ms}.hover\:opacity-80:hover{opacity:0.8}.active\:scale-90:active{--tw-scale-x:.9;--tw-scale-y:.9;transform:translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}.active\:scale-95:active{--tw-scale-x:.95;--tw-scale-y:.95;transform:translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}.active\:cursor-grabbing:active{cursor:grabbing}</style></head>
+<body class="min-h-screen select-none">
+
+  <!-- Main Mobile-First Container -->
+  <div class="max-w-lg mx-auto min-h-screen flex flex-col relative ds-canvas">
+
+    <!-- Top App Header -->
+    <header id="mainHeader" class="sticky top-0 z-30 px-4 pt-4 pb-3 backdrop-blur-md border-b ds-border" style="background-color: color-mix(in srgb, var(--bg-canvas) 92%, transparent);">
+      <div class="flex items-center justify-between gap-2">
+        <div class="flex items-center gap-3">
+          <div class="w-11 h-11 rounded-2xl flex items-center justify-center shrink-0" style="background-color: var(--color-primary-soft); color: var(--color-primary); border: 1px solid var(--border-subtle);">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+            </svg>
+          </div>
+          <div>
+            <h1 class="text-lg font-bold tracking-tight ds-text-primary flex items-center gap-2">
+              مُتعاهِد القرآن
+            </h1>
+            <p id="headerDateBadge" class="text-xs ds-text-secondary font-medium mt-0.5 tabular-nums">٧ جمادى الآخرة ١٤٤٨ هـ • الثلاثاء، ١٧ نوفمبر ٢٠٢٦</p>
+          </div>
+        </div>
+
+        <!-- Quick Share & Theme Switcher -->
+        <div class="flex items-center gap-2">
+          <button onclick="shareTodayAchievement()" title="مشاركة إنجاز اليوم" class="p-2.5 rounded-xl ds-surface ds-text-primary active:scale-95 transition">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path>
+            </svg>
+          </button>
+          <button onclick="toggleTheme()" title="تبديل المظهر الليلي/النهاري" class="p-2.5 rounded-xl ds-surface ds-text-primary active:scale-95 transition">
+            <svg id="themeIconSun" class="w-5 h-5 hidden" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
+            </svg>
+            <svg id="themeIconMoon" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Dynamic Content -->
+    <main id="appContent" class="flex-1 px-4 pt-4 pb-safe space-y-4">
+        <div class="space-y-4 animate-fade-in">
+          <!-- Daily Near & Far Limits -->
+          <div class="ds-surface rounded-3xl p-5 space-y-4">
+            <h3 class="text-sm font-bold ds-text-primary">تخصيص الورد اليومي</h3>
+
+            <div>
+              <div class="flex items-center justify-between mb-1.5">
+                <span class="text-xs font-bold ds-text-primary">أرباع الماضي القريب (تسميع يومي)</span>
+                <span class="text-[11px] ds-text-secondary">الافتراضي: 4</span>
+              </div>
+              <div class="flex items-center justify-between ds-surface-alt p-2.5 rounded-2xl tabular-nums">
+                <button onclick="updateDailyNearLimit(-1)" class="w-9 h-9 rounded-xl ds-surface font-bold text-lg ds-text-primary active:scale-90 transition">-</button>
+                <div class="text-center">
+                  <span class="text-xl font-bold ds-text-primary">4</span>
+                  <span class="text-[11px] ds-text-secondary mr-1">أرباع</span>
+                </div>
+                <button onclick="updateDailyNearLimit(1)" class="w-9 h-9 rounded-xl ds-surface font-bold text-lg ds-text-primary active:scale-90 transition">+</button>
+              </div>
+            </div>
+
+            <div>
+              <div class="flex items-center justify-between mb-1.5">
+                <span class="text-xs font-bold ds-text-primary">أرباع الماضي البعيد (الورد الدوري)</span>
+                <span class="text-[11px] ds-text-secondary">الافتراضي: 5</span>
+              </div>
+              <div class="flex items-center justify-between ds-surface-alt p-2.5 rounded-2xl tabular-nums">
+                <button onclick="updateDailyFarLimit(-1)" class="w-9 h-9 rounded-xl ds-surface font-bold text-lg ds-text-primary active:scale-90 transition">-</button>
+                <div class="text-center">
+                  <span class="text-xl font-bold ds-text-primary">5</span>
+                  <span class="text-[11px] ds-text-secondary mr-1">أرباع</span>
+                </div>
+                <button onclick="updateDailyFarLimit(1)" class="w-9 h-9 rounded-xl ds-surface font-bold text-lg ds-text-primary active:scale-90 transition">+</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Share & Install -->
+          <div class="ds-surface rounded-3xl p-5 space-y-3">
+            <h3 class="text-sm font-bold ds-text-primary">المشاركة والتثبيت على الهاتف (PWA)</h3>
+
+            <button onclick="downloadAppHtmlFile()" class="w-full py-3 px-4 rounded-2xl ds-btn-soft text-xs font-bold flex items-center justify-between border ds-border">
+              <span>1. تنزيل ملف التطبيق (index.html)</span>
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+              </svg>
+            </button>
+
+            <div class="grid grid-cols-2 gap-2.5">
+              <button onclick="downloadManifestFile()" class="py-2.5 px-3 rounded-2xl ds-surface-alt ds-text-primary text-xs font-bold flex items-center justify-center gap-1.5">
+                <span>2. تنزيل manifest.json</span>
+              </button>
+              <button onclick="downloadServiceWorkerFile()" class="py-2.5 px-3 rounded-2xl ds-surface-alt ds-text-primary text-xs font-bold flex items-center justify-center gap-1.5">
+                <span>3. تنزيل sw.js</span>
+              </button>
+            </div>
+
+            <button onclick="shareTodayAchievement()" class="w-full py-3 px-4 rounded-2xl ds-btn-primary text-xs font-bold flex items-center justify-between">
+              <span>مشاركة تقرير إنجاز اليوم (واتساب / تيليجرام)</span>
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path>
+              </svg>
+            </button>
+
+            <div class="p-3 rounded-2xl text-[11px] leading-relaxed border" style="background-color: var(--bg-warning-soft); color: var(--color-warning); border-color: var(--border-subtle);">
+              📱 <strong>لتثبيت التطبيق على شاشة هاتفك:</strong><br>
+              افتح الرابط من متصفح الهاتف (Chrome أو Safari)، ثم اضغط على قائمة المتصفح واختر <strong>"الإضافة إلى الشاشة الرئيسية" (Add to Home Screen)</strong>.
+            </div>
+          </div>
+
+          <!-- Backup & Restore -->
+          <div class="ds-surface rounded-3xl p-5 space-y-3">
+            <h3 class="text-sm font-bold ds-text-primary">النسخ الاحتياطي ونقل البيانات</h3>
+            <div class="grid grid-cols-2 gap-2.5">
+              <button onclick="exportBackupData()" class="py-3 px-3 rounded-2xl ds-surface-alt ds-text-primary text-xs font-bold">
+                📤 تصدير نسخة
+              </button>
+              <button onclick="openImportBackupModal()" class="py-3 px-3 rounded-2xl ds-surface-alt ds-text-primary text-xs font-bold">
+                📥 استعادة نسخة
+              </button>
+            </div>
+          </div>
+
+          <!-- Reset Zone -->
+          <div class="ds-surface rounded-3xl p-5 space-y-2.5">
+            <h3 class="text-xs font-bold" style="color: var(--color-error);">إدارة الدورة والبيانات</h3>
+            <button onclick="confirmResetCycle()" class="w-full py-2.5 px-4 rounded-xl ds-surface-alt ds-text-primary text-xs font-bold text-right">
+              إعادة المراجعة من أول سورة في محفوظاتك
+            </button>
+            <button onclick="confirmClearAllData()" class="w-full py-2.5 px-4 rounded-xl text-xs font-bold text-right text-white" style="background-color: var(--color-error);">
+              مسح جميع المحفوظات والبدء من الصفر
+            </button>
+          </div>
+        </div>
+      </main>
+
+    <!-- Floating Action Button (FAB) for Adding Hifz -->
+    <div id="fabContainer" class="fixed bottom-20 left-0 right-0 z-30 max-w-lg mx-auto pointer-events-none px-4 flex justify-start">
+      <button onclick="openAddModal()" aria-label="إضافة محفوظ جديد" title="إضافة محفوظ جديد أو قديم" class="pointer-events-auto w-14 h-14 rounded-full ds-btn-primary shadow-xl flex items-center justify-center active:scale-90 transition-transform" style="box-shadow: 0 8px 24px rgba(217, 119, 66, 0.38);">
+        <svg class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Bottom Mobile Navigation (3 Tabs Only) -->
+    <nav id="bottomNav" class="fixed bottom-0 left-0 right-0 z-40 max-w-lg mx-auto border-t ds-border bottom-nav-safe backdrop-blur-md" style="background-color: color-mix(in srgb, var(--bg-surface) 95%, transparent);">
+      <div class="grid grid-cols-3 h-16">
+        <button onclick="switchTab('home')" id="nav-home" class="nav-btn flex flex-col items-center justify-center gap-1 transition" style="color: var(--text-secondary);">
+          <div class="nav-pill px-4 py-1.5 rounded-xl" style="background-color: transparent;">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+            </svg>
+          </div>
+          <span class="text-xs font-bold">الرئيسية</span>
+        </button>
+
+        <button onclick="switchTab('library')" id="nav-library" class="nav-btn flex flex-col items-center justify-center gap-1 transition relative" style="color: var(--text-secondary);">
+          <div class="nav-pill px-4 py-1.5 rounded-xl relative" style="background-color: transparent;">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+            </svg>
+            <span id="libraryBadge" class="hidden absolute -top-1 -left-1 text-white text-[10px] font-bold px-1.5 rounded-full tabular-nums" style="background-color: var(--color-primary);">0</span>
+          </div>
+          <span class="text-xs font-bold">المحفوظات</span>
+        </button>
+
+        <button onclick="switchTab('settings')" id="nav-settings" class="nav-btn flex flex-col items-center justify-center gap-1 transition" style="color: var(--color-primary);">
+          <div class="nav-pill px-4 py-1.5 rounded-xl" style="background-color: var(--color-primary-soft);">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+            </svg>
+          </div>
+          <span class="text-xs font-bold">الإعدادات</span>
+        </button>
+      </div>
+    </nav>
+
+    <!-- Full-Screen Review Session View -->
+    <div id="reviewFullScreen" class="fixed inset-0 z-50 hidden flex-col ds-canvas overflow-y-auto">
+      <div class="max-w-lg mx-auto w-full min-h-screen flex flex-col">
+        <!-- Sticky Review Header with Back Arrow -->
+        <div class="sticky top-0 z-20 px-4 py-3.5 backdrop-blur-md border-b ds-border flex items-center justify-between gap-3" style="background-color: color-mix(in srgb, var(--bg-canvas) 94%, transparent);">
+          <div class="flex items-center gap-3">
+            <button onclick="closeReviewSession()" class="p-2.5 rounded-xl ds-surface ds-text-primary active:scale-95 transition flex items-center justify-center" title="الرجوع للرئيسية">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"></path>
+              </svg>
+            </button>
+            <div>
+              <h2 class="text-base font-bold ds-text-primary">جلسة المراجعة اليومية</h2>
+              <p id="reviewSessionSubtitle" class="text-[11px] ds-text-secondary tabular-nums"></p>
+            </div>
+          </div>
+
+          <button onclick="shareTodayAchievement()" class="px-3 py-2 rounded-xl ds-btn-soft text-xs font-bold flex items-center gap-1.5">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path>
+            </svg>
+            <span>مشاركة</span>
+          </button>
+        </div>
+
+        <!-- Review Body -->
+        <div id="reviewFullScreenBody" class="flex-1 px-4 pt-4 pb-12 space-y-5">
+          <!-- Injected dynamically -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Add Hifz Native Mobile Bottom Sheet (Triggered by Floating Action Button) -->
+    <div id="addHifzModal" onclick="handleSheetBackdropClick(event)" class="fixed inset-0 z-50 hidden flex-col justify-end bg-black/50 backdrop-blur-sm transition-opacity duration-200">
+      <div id="addHifzSheetPanel" class="ds-surface rounded-t-[28px] max-w-lg w-full mx-auto px-5 pt-3 pb-8 bottom-sheet-enter max-h-[88vh] flex flex-col shadow-2xl" style="padding-bottom: calc(1.75rem + env(safe-area-inset-bottom, 0px));">
+        <!-- Mobile Drag Handle Pill -->
+        <div id="sheetDragHandle" class="w-full py-2 flex items-center justify-center cursor-grab active:cursor-grabbing shrink-0">
+          <div class="w-11 h-1.5 rounded-full opacity-40" style="background-color: var(--text-secondary);"></div>
+        </div>
+
+        <!-- Sheet Header -->
+        <div class="flex items-center justify-between mb-4 shrink-0">
+          <div>
+            <h3 class="text-base font-bold ds-text-primary">إضافة محفوظ جديد أو قديم</h3>
+            <p class="text-xs ds-text-secondary mt-0.5">يُضاف أحدث حفظك تلقائياً إلى "الماضي القريب" لتثبيته</p>
+          </div>
+          <button onclick="closeAddModal()" aria-label="إغلاق" class="p-2 rounded-xl ds-surface-alt ds-text-secondary hover:opacity-80 active:scale-95 transition">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Scrollable Sheet Content -->
+        <div id="addModalContent" class="space-y-4 overflow-y-auto pr-0.5">
+          <!-- Injected dynamically -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Custom Confirmation / Backup Modal -->
+    <div id="customModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+      <div class="ds-surface rounded-3xl max-w-sm w-full p-5 animate-fade-in">
+        <h3 id="modalTitle" class="text-base font-bold ds-text-primary mb-2"></h3>
+        <div id="modalBody" class="text-sm ds-text-secondary mb-5 leading-relaxed"></div>
+        <div id="modalActions" class="flex items-center justify-end gap-2"></div>
+      </div>
+    </div>
+
+    <!-- Toast Notification Banner -->
+    <div id="toastContainer" class="fixed top-20 left-1/2 -translate-x-1/2 z-[60] pointer-events-none flex flex-col items-center gap-2 w-full max-w-sm px-4"></div>
+
+  </div>
+
+  <script>
+    /**
+     * =========================================================================
+     * 1. COMPLETE QURAN SURAHS & 240 RUB' DATABASE (المصحف الشريف 240 ربعاً)
+     * =========================================================================
+     */
+    const QURAN_DATA = [
+      { id: 1, name: "الفاتحة", startRub: 1, rubList: ["الْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ (الفاتحة)"] },
+      {
+        id: 2, name: "البقرة", startRub: 1,
+        rubList: [
+          "الم ۞ ذَلِكَ الْكِتَابُ لَا رَيْبَ فِيهِ (الربع ١)",
+          "إِنَّ اللَّهَ لَا يَسْتَحْيِي أَنْ يَضْرِبَ مَثَلًا (الربع ٢)",
+          "أَتَأْمُرُونَ النَّاسَ بِالْبِرِّ وَتَنْسَوْنَ أَنْفُسَكُمْ (الربع ٣)",
+          "وَإِذِ اسْتَسْقَى مُوسَى لِقَوْمِهِ (الربع ٤)",
+          "أَفَتَطْمَعُونَ أَنْ يُؤْمِنُوا لَكُمْ (الربع ٥)",
+          "وَلَقَدْ جَاءَكُمْ مُوسَى بِالْبَيِّنَاتِ (الربع ٦)",
+          "مَا نَنْسَخْ مِنْ آيَةٍ أَوْ نُنْسِهَا (الربع ٧)",
+          "وَإِذِ ابْتَلَى إِبْرَاهِيمَ رَبُّهُ بِكَلِمَاتٍ (الربع ٨)",
+          "سَيَقُولُ السُّفَهَاءُ مِنَ النَّاسِ (الربع ٩)",
+          "إِنَّ الصَّفَا وَالْمَرْوَةَ مِنْ شَعَائِرِ اللَّهِ (الربع ١٠)",
+          "لَيْسَ الْبِرَّ أَنْ تُوَلُّوا وُجُوهَكُمْ (الربع ١١)",
+          "يَسْأَلُونَكَ عَنِ الْأَهِلَّةِ (الربع ١٢)",
+          "وَاذْكُرُوا اللَّهَ فِي أَيَّامٍ مَعْدُودَاتٍ (الربع ١٣)",
+          "يَسْأَلُونَكَ مَاذَا يُنْفِقُونَ (الربع ١٤)",
+          "وَالْوَالِدَاتُ يُرْضِعْنَ أَوْلَادَهُنَّ (الربع ١٥)",
+          "أَلَمْ تَرَ إِلَى الَّذِينَ خَرَجُوا مِنْ دِيَارِهِمْ (الربع ١٦)",
+          "تِلْكَ الرُّسُلُ فَضَّلْنَا بَعْضَهُمْ عَلَى بَعْضٍ (الربع ١٧)",
+          "قَوْلٌ مَعْرُوفٌ وَمَغْفِرَةٌ خَيْرٌ مِنْ صَدَقَةٍ (الربع ١٨)",
+          "لَيْسَ عَلَيْكَ هُدَاهُمْ وَلَكِنَّ اللَّهَ يَهْدِي (الربع ١٩)",
+          "وَإِنْ كُنْتُمْ عَلَى سَفَرٍ وَلَمْ تَجِدُوا كَاتِبًا (الربع ٢٠)"
+        ]
+      },
+      {
+        id: 3, name: "آل عمران", startRub: 21,
+        rubList: [
+          "الم ۞ اللَّهُ لَا إِلَهَ إِلَّا هُوَ الْحَيُّ الْقَيُّومُ (الربع ١)",
+          "قُلْ أَؤُنَبِّئُكُمْ بِخَيْرٍ مِنْ ذَلِكُمْ (الربع ٢)",
+          "إِنَّ اللَّهَ اصْطَفَى آدَمَ وَنُوحًا (الربع ٣)",
+          "فَلَمَّا أَحَسَّ عِيسَى مِنْهُمُ الْكُفْرَ (الربع ٤)",
+          "وَمِنْ أَهْلِ الْكِتَابِ مَنْ إِنْ تَأْمَنْهُ بِقِنْطَارٍ (الربع ٥)",
+          "كُلُّ الطَّعَامِ كَانَ حِلًّا لِبَنِي إِسْرَائِيلَ (الربع ٦)",
+          "وَسَارِعُوا إِلَى مَغْفِرَةٍ مِنْ رَبِّكُمْ (الربع ٧)",
+          "إِذْ تُصْعِدُونَ وَلَا تَلْوُونَ عَلَى أَحَدٍ (الربع ٨)",
+          "يَسْتَبْشِرُونَ بِنِعْمَةٍ مِنَ اللَّهِ وَفَضْلٍ (الربع ٩)",
+          "لَتُبْلَوُنَّ فِي أَمْوَالِكُمْ وَأَنْفُسِكُمْ (الربع ١٠)"
+        ]
+      },
+      {
+        id: 4, name: "النساء", startRub: 31,
+        rubList: [
+          "يَا أَيُّهَا النَّاسُ اتَّقُوا رَبَّكُمُ الَّذِي خَلَقَكُمْ (الربع ١)",
+          "وَلَكُمْ نِصْفُ مَا تَرَكَ أَزْوَاجُكُمْ (الربع ٢)",
+          "وَالْمُحْصَنَاتُ مِنَ النِّسَاءِ إِلَّا مَا مَلَكَتْ أَيْمَانُكُمْ (الربع ٣)",
+          "وَاعْبُدُوا اللَّهَ وَلَا تُشْرِكُوا بِهِ شَيْئًا (الربع ٤)",
+          "إِنَّ اللَّهَ يَأْمُرُكُمْ أَنْ تُؤَدُّوا الْأَمَانَاتِ (الربع ٥)",
+          "فَلْيُقَاتِلْ فِي سَبِيلِ اللَّهِ الَّذِينَ يَشْرُونَ (الربع ٦)",
+          "فَمَا لَكُمْ فِي الْمُنَافِقِينَ فِئَتَيْنِ (الربع ٧)",
+          "وَمَنْ يُهَاجِرْ فِي سَبِيلِ اللَّهِ (الربع ٨)",
+          "لَا خَيْرَ فِي كَثِيرٍ مِنْ نَجْوَاهُمْ (الربع ٩)",
+          "وَيَسْتَفْتُونَكَ فِي النِّسَاءِ (الربع ١٠)",
+          "لَا يُحِبُّ اللَّهُ الْجَهْرَ بِالسُّوءِ مِنَ الْقَوْلِ (الربع ١١)",
+          "إِنَّا أَوْحَيْنَا إِلَيْكَ كَمَا أَوْحَيْنَا إِلَى نُوحٍ (الربع ١٢)"
+        ]
+      },
+      {
+        id: 5, name: "المائدة", startRub: 43,
+        rubList: [
+          "يَا أَيُّهَا الَّذِينَ آمَنُوا أَوْفُوا بِالْعُقُودِ (الربع ١)",
+          "وَلَقَدْ أَخَذَ اللَّهُ مِيثَاقَ بَنِي إِسْرَائِيلَ (الربع ٢)",
+          "وَاتْلُ عَلَيْهِمْ نَبَأَ ابْنَيْ آدَمَ بِالْحَقِّ (الربع ٣)",
+          "يَا أَيُّهَا الرَّسُولُ لَا يَحْزُنْكَ الَّذِينَ يُسَارِعُونَ (الربع ٤)",
+          "يَا أَيُّهَا الَّذِينَ آمَنُوا لَا تَتَّخِذُوا الْيَهُودَ وَالنَّصَارَى (الربع ٥)",
+          "لَتَجِدَنَّ أَشَدَّ النَّاسِ عَدَاوَةً لِلَّذِينَ آمَنُوا (الربع ٦)",
+          "جَعَلَ اللَّهُ الْكَعْبَةَ الْبَيْتَ الْحَرَامَ (الربع ٧)",
+          "يَوْمَ يَجْمَعُ اللَّهُ الرُّسُلَ (الربع ٨)"
+        ]
+      },
+      {
+        id: 6, name: "الأنعام", startRub: 51,
+        rubList: [
+          "الْحَمْدُ لِلَّهِ الَّذِي خَلَقَ السَّمَاوَاتِ وَالْأَرْضَ (الربع ١)",
+          "وَإِذَا جَاءَكَ الَّذِينَ يُؤْمِنُونَ بِآيَاتِنَا (الربع ٢)",
+          "وَعِنْدَهُ مَفَاتِحُ الْغَيْبِ لَا يَعْلَمُهَا إِلَّا هُوَ (الربع ٣)",
+          "وَلَوْ أَنَّنَا نَزَّلْنَا إِلَيْهِمُ الْمَلَائِكَةَ (الربع ٤)",
+          "وَمَا لَكُمْ أَلَّا تَأْكُلُوا مِمَّا ذُكِرَ اسْمُ اللَّهِ عَلَيْهِ (الربع ٥)",
+          "وَهُوَ الَّذِي أَنْشَأَ جَنَّاتٍ مَعْرُوشَاتٍ (الربع ٦)",
+          "قُلْ تَعَالَوْا أَتْلُ مَا حَرَّمَ رَبُّكُمْ عَلَيْكُمْ (الربع ٧)"
+        ]
+      },
+      {
+        id: 7, name: "الأعراف", startRub: 58,
+        rubList: [
+          "المص ۞ كِتَابٌ أُنْزِلَ إِلَيْكَ (الربع ١)",
+          "وَنَادَى أَصْحَابُ الْجَنَّةِ أَصْحَابَ النَّارِ (الربع ٢)",
+          "وَالْبَلَدُ الطَّيِّبُ يَخْرُجُ نَبَاتُهُ بِإِذْنِ رَبِّهِ (الربع ٣)",
+          "قَالَ الْمَلَأُ الَّذِينَ اسْتَكْبَرُوا مِنْ قَوْمِهِ (الربع ٤)",
+          "وَأَوْحَيْنَا إِلَى مُوسَى أَنْ أَلْقِ عَصَاكَ (الربع ٥)",
+          "وَاكْتُبْ لَنَا فِي هَذِهِ الدُّنْيَا حَسَنَةً (الربع ٦)",
+          "وَإِذْ نَتَقْنَا الْجَبَلَ فَوْقَهُمْ كَأَنَّهُ ظُلَّةٌ (الربع ٧)",
+          "هُوَ الَّذِي خَلَقَكُمْ مِنْ نَفْسٍ وَاحِدَةٍ (الربع ٨)"
+        ]
+      },
+      {
+        id: 8, name: "الأنفال", startRub: 66,
+        rubList: [
+          "يَسْأَلُونَكَ عَنِ الْأَنْفَالِ (الربع ١)",
+          "وَلَوْ عَلِمَ اللَّهُ فِيهِمْ خَيْرًا لَأَسْمَعَهُمْ (الربع ٢)",
+          "وَاعْلَمُوا أَنَّمَا غَنِمْتُمْ مِنْ شَيْءٍ (الربع ٣)",
+          "وَإِنْ جَنَحُوا لِلسَّلْمِ فَاجْنَحْ لَهَا (الربع ٤)"
+        ]
+      },
+      {
+        id: 9, name: "التوبة", startRub: 70,
+        rubList: [
+          "بَرَاءَةٌ مِنَ اللَّهِ وَرَسُولِهِ (الربع ١)",
+          "أَجَعَلْتُمْ سِقَايَةَ الْحَاجِّ وَعِمَارَةَ الْمَسْجِدِ (الربع ٢)",
+          "يَا أَيُّهَا الَّذِينَ آمَنُوا إِنَّ كَثِيرًا مِنَ الْأَحْبَارِ (الربع ٣)",
+          "وَلَوْ أَرَادُوا الْخُرُوجَ لَأَعَدُّوا لَهُ عُدَّةً (الربع ٤)",
+          "إِنَّمَا الصَّدَقَاتُ لِلْفُقَرَاءِ وَالْمَسَاكِينِ (الربع ٥)",
+          "وَالْمُؤْمِنُونَ وَالْمُؤْمِنَاتُ بَعْضُهُمْ أَوْلِيَاءُ بَعْضٍ (الربع ٦)",
+          "إِنَّمَا السَّبِيلُ عَلَى الَّذِينَ يَسْتَأْذِنُونَكَ (الربع ٧)",
+          "إِنَّ اللَّهَ اشْتَرَى مِنَ الْمُؤْمِنِينَ أَنْفُسَهُمْ (الربع ٨)"
+        ]
+      },
+      {
+        id: 10, name: "يونس", startRub: 78,
+        rubList: [
+          "الر ۚ تِلْكَ آيَاتُ الْكِتَابِ الْحَكِيمِ (الربع ١)",
+          "وَلَوْ يُعَجِّلُ اللَّهُ لِلنَّاسِ الشَّرَّ (الربع ٢)",
+          "لِلَّذِينَ أَحْسَنُوا الْحُسْنَى وَزِيَادَةٌ (الربع ٣)",
+          "وَيَسْتَنْبِئُونَكَ أَحَقٌّ هُوَ (الربع ٤)",
+          "وَمَا تَكُونُ فِي شَأْنٍ وَمَا تَتْلُو مِنْهُ (الربع ٥)"
+        ]
+      },
+      {
+        id: 11, name: "هود", startRub: 83,
+        rubList: [
+          "الر ۚ كِتَابٌ أُحْكِمَتْ آيَاتُهُ (الربع ١)",
+          "وَمَا مِنْ دَابَّةٍ فِي الْأَرْضِ إِلَّا عَلَى اللَّهِ رِزْقُهَا (الربع ٢)",
+          "مَثَلُ الْفَرِيقَيْنِ كَالْأَعْمَى وَالْأَصَمِّ (الربع ٣)",
+          "وَإِلَى عَادٍ أَخَاهُمْ هُودًا (الربع ٤)",
+          "وَإِلَى مَدْيَنَ أَخَاهُمْ شُعَيْبًا (الربع ٥)",
+          "فَلَوْلَا كَانَ مِنَ الْقُرُونِ مِنْ قَبْلِكُمْ أُولُو بَقِيَّةٍ (الربع ٦)"
+        ]
+      },
+      {
+        id: 12, name: "يوسف", startRub: 89,
+        rubList: [
+          "الر ۚ تِلْكَ آيَاتُ الْكِتَابِ الْمُبِينِ (الربع ١)",
+          "وَمَا أُبَرِّئُ نَفْسِي إِنَّ النَّفْسَ لَأَمَّارَةٌ بِالسُّوءِ (الربع ٢)",
+          "قَالَ اجْعَلْنِي عَلَى خَزَائِنِ الْأَرْضِ (الربع ٣)",
+          "قَالُوا يَا أَبَانَا مَا نَبْغِي هَذِهِ بِضَاعَتُنَا (الربع ٤)",
+          "قَالَ هَلْ آمَنُكُمْ عَلَيْهِ إِلَّا كَمَا أَمِنْتُكُمْ (الربع ٥)",
+          "وَمَا أَرْسَلْنَا مِنْ قَبْلِكَ إِلَّا رِجَالًا نُوحِي إِلَيْهِمْ (الربع ٦)"
+        ]
+      },
+      {
+        id: 13, name: "الرعد", startRub: 95,
+        rubList: [
+          "المر ۚ تِلْكَ آيَاتُ الْكِتَابِ (الربع ١)",
+          "وَيَسْتَعْجِلُونَكَ بِالسَّيِّئَةِ قَبْلَ الْحَسَنَةِ (الربع ٢)",
+          "أَفَمَنْ يَعْلَمُ أَنَّمَا أُنْزِلَ إِلَيْكَ مِنْ رَبِّكَ الْحَقُّ (الربع ٣)",
+          "أَفَلَمْ يَيْأَسِ الَّذِينَ آمَنُوا (الربع ٤)"
+        ]
+      },
+      {
+        id: 14, name: "إبراهيم", startRub: 99,
+        rubList: [
+          "الر ۚ كِتَابٌ أَنْزَلْنَاهُ إِلَيْكَ (الربع ١)",
+          "وَقَالَ الشَّيْطَانُ لَمَّا قُضِيَ الْأَمْرُ (الربع ٢)",
+          "أَلَمْ تَرَ إِلَى الَّذِينَ بَدَّلُوا نِعْمَتَ اللَّهِ كُفْرًا (الربع ٣)"
+        ]
+      },
+      {
+        id: 15, name: "الحجر", startRub: 102,
+        rubList: [
+          "الر ۚ تِلْكَ آيَاتُ الْكِتَابِ وَقُرْآنٍ مُبِينٍ (الربع ١)",
+          "نَبِّئْ عِبَادِي أَنِّي أَنَا الْغَفُورُ الرَّحِيمُ (الربع ٢)"
+        ]
+      },
+      {
+        id: 16, name: "النحل", startRub: 104,
+        rubList: [
+          "أَتَى أَمْرُ اللَّهِ فَلَا تَسْتَعْجِلُوهُ (الربع ١)",
+          "وَقِيلَ لِلَّذِينَ اتَّقَوْا مَاذَا أَنْزَلَ رَبُّكُمْ (الربع ٢)",
+          "وَقَالَ اللَّهُ لَا تَتَّخِذُوا إِلَهَيْنِ اثْنَيْنِ (الربع ٣)",
+          "ضَرَبَ اللَّهُ مَثَلًا عَبْدًا مَمْلُوكًا (الربع ٤)",
+          "إِنَّ اللَّهَ يَأْمُرُ بِالْعَدْلِ وَالْإِحْسَانِ (الربع ٥)",
+          "وَضَرَبَ اللَّهُ مَثَلًا قَرْيَةً كَانَتْ آمِنَةً (الربع ٦)"
+        ]
+      },
+      {
+        id: 17, name: "الإسراء", startRub: 110,
+        rubList: [
+          "سُبْحَانَ الَّذِي أَسْرَى بِعَبْدِهِ لَيْلًا (الربع ١)",
+          "وَقَضَى رَبُّكَ أَلَّا تَعْبُدُوا إِلَّا إِيَّاهُ (الربع ٢)",
+          "قُلْ كُونُوا حِجَارَةً أَوْ حَدِيدًا (الربع ٣)",
+          "وَلَقَدْ كَرَّمْنَا بَنِي آدَمَ (الربع ٤)",
+          "أَوَلَمْ يَرَوْا أَنَّ اللَّهَ الَّذِي خَلَقَ السَّمَاوَاتِ (الربع ٥)"
+        ]
+      },
+      {
+        id: 18, name: "الكهف", startRub: 115,
+        rubList: [
+          "الْحَمْدُ لِلَّهِ الَّذِي أَنْزَلَ عَلَى عَبْدِهِ الْكِتَابَ (الربع ١)",
+          "وَاضْرِبْ لَهُمْ مَثَلًا رَجُلَيْنِ (الربع ٢)",
+          "وَإِذْ قُلْنَا لِلْمَلَائِكَةِ اسْجُدُوا لِآدَمَ (الربع ٣)",
+          "قَالَ أَلَمْ أَقُلْ لَكَ إِنَّكَ لَنْ تَسْتَطِيعَ مَعِيَ صَبْرًا (الربع ٤)",
+          "قَالَ أَلَمْ أَقُلْ إِنَّكَ لَنْ تَسْتَطِيعَ مَعِيَ صَبْرًا (الربع ٥)"
+        ]
+      },
+      {
+        id: 19, name: "مريم", startRub: 120,
+        rubList: [
+          "كهيعص ۞ ذِكْرُ رَحْمَتِ رَبِّكَ عَبْدَهُ زَكَرِيَّا (الربع ١)",
+          "فَخَلَفَ مِنْ بَعْدِهِمْ خَلْفٌ أَضَاعُوا الصَّلَاةَ (الربع ٢)"
+        ]
+      },
+      {
+        id: 20, name: "طه", startRub: 122,
+        rubList: [
+          "طه ۞ مَا أَنْزَلْنَا عَلَيْكَ الْقُرْآنَ لِتَشْقَى (الربع ١)",
+          "مِنْهَا خَلَقْنَاكُمْ وَفِيهَا نُعِيدُكُمْ (الربع ٢)",
+          "وَمَا أَعْجَلَكَ عَنْ قَوْمِكَ يَا مُوسَى (الربع ٣)",
+          "وَعَنَتِ الْوُجُوهُ لِلْحَيِّ الْقَيُّومِ (الربع ٤)"
+        ]
+      },
+      {
+        id: 21, name: "الأنبياء", startRub: 126,
+        rubList: [
+          "اقْتَرَبَ لِلنَّاسِ حِسَابُهُمْ (الربع ١)",
+          "وَإِذَا رَآكَ الَّذِينَ كَفَرُوا إِنْ يَتَّخِذُونَكَ إِلَّا هُزُوًا (الربع ٢)",
+          "وَلَقَدْ آتَيْنَا إِبْرَاهِيمَ رُشْدَهُ مِنْ قَبْلُ (الربع ٣)",
+          "وَأَيُّوبَ إِذْ نَادَى رَبَّهُ أَنِّي مَسَّنِيَ الضُّرُّ (الربع ٤)"
+        ]
+      },
+      {
+        id: 22, name: "الحج", startRub: 130,
+        rubList: [
+          "يَا أَيُّهَا النَّاسُ اتَّقُوا رَبَّكُمْ إِنَّ زَلْزَلَةَ السَّاعَةِ (الربع ١)",
+          "هَذَانِ خَصْمَانِ اخْتَصَمُوا فِي رَبِّهِمْ (الربع ٢)",
+          "إِنَّ اللَّهَ يُدَافِعُ عَنِ الَّذِينَ آمَنُوا (الربع ٣)",
+          "ذَلِكَ وَمَنْ عَاقَبَ بِمِثْلِ مَا عُوقِبَ بِهِ (الربع ٤)"
+        ]
+      },
+      {
+        id: 23, name: "المؤمنون", startRub: 134,
+        rubList: [
+          "قَدْ أَفْلَحَ الْمُؤْمِنُونَ (الربع ١)",
+          "ثُمَّ أَنْشَأْنَا مِنْ بَعْدِهِمْ قَرْنًا آخَرِينَ (الربع ٢)",
+          "هَيْهَاتَ هَيْهَاتَ لِمَا تُوعَدُونَ (الربع ٣)"
+        ]
+      },
+      {
+        id: 24, name: "النور", startRub: 137,
+        rubList: [
+          "سُورَةٌ أَنْزَلْنَاهَا وَفَرَضْنَاهَا (الربع ١)",
+          "يَا أَيُّهَا الَّذِينَ آمَنُوا لَا تَتَّبِعُوا خُطُوَاتِ الشَّيْطَانِ (الربع ٢)",
+          "اللَّهُ نُورُ السَّمَاوَاتِ وَالْأَرْضِ (الربع ٣)",
+          "وَعَدَ اللَّهُ الَّذِينَ آمَنُوا مِنْكُمْ وَعَمِلُوا الصَّالِحَاتِ (الربع ٤)"
+        ]
+      },
+      {
+        id: 25, name: "الفرقان", startRub: 141,
+        rubList: [
+          "تَبَارَكَ الَّذِي نَزَّلَ الْفُرْقَانَ عَلَى عَبْدِهِ (الربع ١)",
+          "وَقَالَ الَّذِينَ لَا يَرْجُونَ لِقَاءَنَا (الربع ٢)",
+          "وَهُوَ الَّذِي مَرَجَ الْبَحْرَيْنِ هَذَا عَذْبٌ فُرَاتٌ (الربع ٣)"
+        ]
+      },
+      {
+        id: 26, name: "الشعراء", startRub: 144,
+        rubList: [
+          "طسم ۞ تِلْكَ آيَاتُ الْكِتَابِ الْمُبِينِ (الربع ١)",
+          "قَالَ أَوَلَوْ جِئْتُكَ بِشَيْءٍ مُبِينٍ (الربع ٢)",
+          "فَأَوْحَيْنَا إِلَى مُوسَى أَنِ اضْرِبْ بِعَصَاكَ الْبَحْرَ (الربع ٣)",
+          "كَذَّبَتْ عَادٌ الْمُرْسَلِينَ (الربع ٤)",
+          "قَالُوا أَنُؤْمِنُ لَكَ وَاتَّبَعَكَ الْأَرْذَلُونَ (الربع ٥)"
+        ]
+      },
+      {
+        id: 27, name: "النمل", startRub: 149,
+        rubList: [
+          "طس ۚ تِلْكَ آيَاتُ الْقُرْآنِ وَكِتَابٍ مُبِينٍ (الربع ١)",
+          "قَالَ يَا أَيُّهَا الْمَلَأُ أَيُّكُمْ يَأْتِينِي بِعَرْشِهَا (الربع ٢)",
+          "فَمَا كَانَ جَوَابَ قَوْمِهِ إِلَّا أَنْ قَالُوا أَخْرِجُوا آلَ لُوطٍ (الربع ٣)",
+          "وَقَالَ الَّذِينَ كَفَرُوا أَإِذَا كُنَّا تُرَابًا وَآبَاؤُنَا (الربع ٤)"
+        ]
+      },
+      {
+        id: 28, name: "القصص", startRub: 153,
+        rubList: [
+          "طسم ۞ تِلْكَ آيَاتُ الْكِتَابِ الْمُبِينِ (الربع ١)",
+          "فَوَكَزَهُ مُوسَى فَقَضَى عَلَيْهِ (الربع ٢)",
+          "فَلَمَّا قَضَى مُوسَى الْأَجَلَ وَسَارَ بِأَهْلِهِ (الربع ٣)",
+          "وَلَقَدْ وَصَّلْنَا لَهُمُ الْقَوْلَ لَعَلَّهُمْ يَتَذَكَّرُونَ (الربع ٤)",
+          "إِنَّ قَارُونَ كَانَ مِنْ قَوْمِ مُوسَى (الربع ٥)"
+        ]
+      },
+      {
+        id: 29, name: "العنكبوت", startRub: 158,
+        rubList: [
+          "الم ۞ أَحَسِبَ النَّاسُ أَنْ يُتْرَكُوا (الربع ١)",
+          "فَآمَنَ لَهُ لُوطٌ ۘ وَقَالَ إِنِّي مُهَاجِرٌ إِلَى رَبِّي (الربع ٢)",
+          "وَلَا تُجَادِلُوا أَهْلَ الْكِتَابِ إِلَّا بِالَّتِي هِيَ أَحْسَنُ (الربع ٣)"
+        ]
+      },
+      {
+        id: 30, name: "الروم", startRub: 161,
+        rubList: [
+          "الم ۞ غُلِبَتِ الرُّومُ (الربع ١)",
+          "فَأَقِمْ وَجْهَكَ لِلدِّينِ حَنِيفًا (الربع ٢)",
+          "اللَّهُ الَّذِي خَلَقَكُمْ مِنْ ضَعْفٍ (الربع ٣)"
+        ]
+      },
+      {
+        id: 31, name: "لقمان", startRub: 164,
+        rubList: [
+          "الم ۞ تِلْكَ آيَاتُ الْكِتَابِ الْحَكِيمِ (الربع ١)",
+          "وَمَنْ يُسْلِمْ وَجْهَهُ إِلَى اللَّهِ وَهُوَ مُحْسِنٌ (الربع ٢)"
+        ]
+      },
+      {
+        id: 32, name: "السجدة", startRub: 166,
+        rubList: [
+          "الم ۞ تَنْزِيلُ الْكِتَابِ لَا رَيْبَ فِيهِ (الربع ١)",
+          "وَمَنْ أَظْلَمُ مِمَّنْ ذُكِّرَ بِآيَاتِ رَبِّهِ (الربع ٢)"
+        ]
+      },
+      {
+        id: 33, name: "الأحزاب", startRub: 168,
+        rubList: [
+          "يَا أَيُّهَا النَّبِيُّ اتَّقِ اللَّهَ (الربع ١)",
+          "قَدْ يَعْلَمُ اللَّهُ الْمُعَوِّقِينَ مِنْكُمْ (الربع ٢)",
+          "وَمَنْ يَقْنُتْ مِنْكُنَّ لِلَّهِ وَرَسُولِهِ (الربع ٣)",
+          "تُرْجِي مَنْ تَشَاءُ مِنْهُنَّ وَتُؤْوِي إِلَيْكَ مَنْ تَشَاءُ (الربع ٤)",
+          "لَئِنْ لَمْ يَنْتَهِ الْمُنَافِقُونَ (الربع ٥)"
+        ]
+      },
+      {
+        id: 34, name: "سبأ", startRub: 173,
+        rubList: [
+          "الْحَمْدُ لِلَّهِ الَّذِي لَهُ مَا فِي السَّمَاوَاتِ (الربع ١)",
+          "وَلَقَدْ آتَيْنَا دَاوُودَ مِنَّا فَضْلًا (الربع ٢)",
+          "قُلْ مَنْ يَرْزُقُكُمْ مِنَ السَّمَاوَاتِ وَالْأَرْضِ (الربع ٣)",
+          "قُلْ إِنَّمَا أَعِظُكُمْ بِوَاحِدَةٍ (الربع ٤)"
+        ]
+      },
+      {
+        id: 35, name: "فاطر", startRub: 177,
+        rubList: [
+          "الْحَمْدُ لِلَّهِ فَاطِرِ السَّمَاوَاتِ وَالْأَرْضِ (الربع ١)",
+          "يَا أَيُّهَا النَّاسُ أَنْتُمُ الْفُقَرَاءُ إِلَى اللَّهِ (الربع ٢)",
+          "إِنَّ اللَّهَ يُمْسِكُ السَّمَاوَاتِ وَالْأَرْضَ أَنْ تَزُولَا (الربع ٣)"
+        ]
+      },
+      {
+        id: 36, name: "يس", startRub: 180,
+        rubList: [
+          "يس ۞ وَالْقُرْآنِ الْحَكِيمِ (الربع ١)",
+          "وَمَا أَنْزَلْنَا عَلَى قَوْمِهِ مِنْ بَعْدِهِ مِنْ جُنْدٍ (الربع ٢)",
+          "فَسُبْحَانَ الَّذِي بِيَدِهِ مَلَكُوتُ كُلِّ شَيْءٍ (الربع ٣)"
+        ]
+      },
+      {
+        id: 37, name: "الصافات", startRub: 183,
+        rubList: [
+          "وَالصَّافَّاتِ صَفًّا (الربع ١)",
+          "فَأَقْبَلَ بَعْضُهُمْ عَلَى بَعْضٍ يَتَسَاءَلُونَ (الربع ٢)",
+          "وَلَقَدْ مَنَنَّا عَلَى مُوسَى وَهَارُونَ (الربع ٣)",
+          "فَنَبَذْنَاهُ بِالْعَرَاءِ وَهُوَ سَقِيمٌ (الربع ٤)"
+        ]
+      },
+      {
+        id: 38, name: "ص", startRub: 187,
+        rubList: [
+          "ص ۚ وَالْقُرْآنِ ذِي الذِّكْرِ (الربع ١)",
+          "وَلَقَدْ فَتَنَّا سُلَيْمَانَ وَأَلْقَيْنَا عَلَى كُرْسِيِّهِ جَسَدًا (الربع ٢)",
+          "هَذَا ذِكْرٌ ۚ وَإِنَّ لِلْمُتَّقِينَ لَحُسْنَ مَآبٍ (الربع ٣)"
+        ]
+      },
+      {
+        id: 39, name: "الزمر", startRub: 190,
+        rubList: [
+          "تَنْزِيلُ الْكِتَابِ مِنَ اللَّهِ الْعَزِيزِ الْحَكِيمِ (الربع ١)",
+          "وَإِذَا مَسَّ الْإِنْسَانَ ضُرٌّ دَعَا رَبَّهُ (الربع ٢)",
+          "فَمَنْ أَظْلَمُ مِمَّنْ كَذَبَ عَلَى اللَّهِ (الربع ٣)",
+          "قُلْ يَا عِبَادِيَ الَّذِينَ أَسْرَفُوا عَلَى أَنْفُسِهِمْ (الربع ٤)"
+        ]
+      },
+      {
+        id: 40, name: "غافر", startRub: 194,
+        rubList: [
+          "حم ۞ تَنْزِيلُ الْكِتَابِ مِنَ اللَّهِ الْعَزِيزِ الْعَلِيمِ (الربع ١)",
+          "وَقالَ رَجُلٌ مُؤْمِنٌ مِنْ آلِ فِرْعَوْنَ (الربع ٢)",
+          "وَيَا قَوْمِ مَا لِي أَدْعُوكُمْ إِلَى النَّجَاةِ (الربع ٣)",
+          "الَّذِينَ كَذَّبُوا بِالْكِتَابِ وَبِمَا أَرْسَلْنَا بِهِ رُسُلَنَا (الربع ٤)"
+        ]
+      },
+      {
+        id: 41, name: "فصلت", startRub: 198,
+        rubList: [
+          "حم ۞ تَنْزِيلٌ مِنَ الرَّحْمَنِ الرَّحِيمِ (الربع ١)",
+          "وَمَا كُنْتُمْ تَسْتَتِرُونَ أَنْ يَشْهَدَ عَلَيْكُمْ سَمْعُكُمْ (الربع ٢)",
+          "إِلَيْهِ يُرَدُّ عِلْمُ السَّاعَةِ (الربع ٣)"
+        ]
+      },
+      {
+        id: 42, name: "الشورى", startRub: 201,
+        rubList: [
+          "حم ۞ عسق (الربع ١)",
+          "شَرَعَ لَكُمْ مِنَ الدِّينِ مَا وَصَّى بِهِ نُوحًا (الربع ٢)",
+          "وَلَوْ بَسَطَ اللَّهُ الرِّزْقَ لِعِبَادِهِ لَبَغَوْا فِي الْأَرْضِ (الربع ٣)",
+          "وَمَا كَانَ لِبَشَرٍ أَنْ يُكَلِّمَهُ اللَّهُ إِلَّا وَحْيًا (الربع ٤)"
+        ]
+      },
+      {
+        id: 43, name: "الزخرف", startRub: 205,
+        rubList: [
+          "حم ۞ وَالْكِتَابِ الْمُبِينِ (الربع ١)",
+          "وَإِذْ قَالَ إِبْرَاهِيمُ لِأَبِيهِ وَقَوْمِهِ إِنَّنِي بَرَاءٌ (الربع ٢)",
+          "وَلَمَّا ضُرِبَ ابْنُ مَرْيَمَ مَثَلًا (الربع ٣)"
+        ]
+      },
+      {
+        id: 44, name: "الدخان", startRub: 208,
+        rubList: [
+          "حم ۞ وَالْكِتَابِ الْمُبِينِ (الربع ١)",
+          "وَلَقَدْ فَتَنَّا قَبْلَهُمْ قَوْمَ فِرْعَوْنَ (الربع ٢)"
+        ]
+      },
+      {
+        id: 45, name: "الجاثية", startRub: 210,
+        rubList: [
+          "حم ۞ تَنْزِيلُ الْكِتَابِ مِنَ اللَّهِ الْعَزِيزِ الْحَكِيمِ (الربع ١)",
+          "وَلَقَدْ آتَيْنَا بَنِي إِسْرَائِيلَ الْكِتَابَ وَالْحُكْمَ (الربع ٢)"
+        ]
+      },
+      {
+        id: 46, name: "الأحقاف", startRub: 212,
+        rubList: [
+          "حم ۞ تَنْزِيلُ الْكِتَابِ مِنَ اللَّهِ الْعَزِيزِ الْحَكِيمِ (الربع ١)",
+          "وَاذْكُرْ أَخَا عَادٍ إِذْ أَنْذَرَ قَوْمَهُ بِالْأَحْقَافِ (الربع ٢)"
+        ]
+      },
+      {
+        id: 47, name: "محمد", startRub: 214,
+        rubList: [
+          "الَّذِينَ كَفَرُوا وَصَدُّوا عَنْ سَبِيلِ اللَّهِ (الربع ١)",
+          "أَفَلَمْ يَسِيرُوا فِي الْأَرْضِ فَيَنْظُرُوا (الربع ٢)"
+        ]
+      },
+      {
+        id: 48, name: "الفتح", startRub: 216,
+        rubList: [
+          "إِنَّا فَتَحْنَا لَكَ فَتْحًا مُبِينًا (الربع ١)",
+          "لَقَدْ رَضِيَ اللَّهُ عَنِ الْمُؤْمِنِينَ إِذْ يُبَايِعُونَكَ (الربع ٢)"
+        ]
+      },
+      {
+        id: 49, name: "الحجرات", startRub: 218,
+        rubList: [
+          "يَا أَيُّهَا الَّذِينَ آمَنُوا لَا تُقَدِّمُوا بَيْنَ يَدَيِ اللَّهِ وَرَسُولِهِ (الربع ١)",
+          "قَالَتِ الْأَعْرَابُ آمَنَّا (الربع ٢)"
+        ]
+      },
+      { id: 50, name: "ق", startRub: 220, rubList: ["ق ۚ وَالْقُرْآنِ الْمَجِيدِ (الربع ١)", "قَالَ قَرِينُهُ رَبَّنَا مَا أَطْغَيْتُهُ (الربع ٢)"] },
+      { id: 51, name: "الذاريات", startRub: 222, rubList: ["وَالذَّارِيَاتِ ذَرْوًا (الربع ١)", "قَالَ فَمَا خَطْبُكُمْ أَيُّهَا الْمُرْسَلُونَ (الربع ٢)"] },
+      { id: 52, name: "الطور", startRub: 224, rubList: ["وَالطُّورِ ۞ وَكِتَابٍ مَسْطُورٍ (سورة الطور)"] },
+      { id: 53, name: "النجم", startRub: 225, rubList: ["وَالنَّجْمِ إِذَا هَوَى (الربع ١)", "أَفَرَأَيْتَ الَّذِي تَوَلَّى (الربع ٢)"] },
+      { id: 54, name: "القمر", startRub: 227, rubList: ["اقْتَرَبَتِ السَّاعَةُ وَانْشَقَّ الْقَمَرُ (سورة القمر)"] },
+      { id: 55, name: "الرحمن", startRub: 228, rubList: ["الرَّحْمَنُ ۞ عَلَّمَ الْقُرْآنَ (سورة الرحمن)"] },
+      { id: 56, name: "الواقعة", startRub: 229, rubList: ["إِذَا وَقَعَتِ الْوَاقِعَةُ (الربع ١)", "فَلَا أُقْسِمُ بِمَوَاقِعِ النُّجُومِ (الربع ٢)"] },
+      { id: 57, name: "الحديد", startRub: 231, rubList: ["سَبَّحَ لِلَّهِ مَا فِي السَّمَاوَاتِ وَالْأَرْضِ (الربع ١)", "أَلَمْ يَأْنِ لِلَّذِينَ آمَنُوا أَنْ تَخْشَعَ قُلُوبُهُمْ (الربع ٢)"] },
+      { id: 58, name: "المجادلة", startRub: 233, rubList: ["قَدْ سَمِعَ اللَّهُ قَوْلَ الَّتِي تُجَادِلُكَ (الربع ١)", "أَلَمْ تَرَ إِلَى الَّذِينَ نُهُوا عَنِ النَّجْوَى (الربع ٢)"] },
+      { id: 59, name: "الحشر", startRub: 235, rubList: ["سَبَّحَ لِلَّهِ مَا فِي السَّمَاوَاتِ وَمَا فِي الْأَرْضِ (الربع ١)", "أَلَمْ تَرَ إِلَى الَّذِينَ نَافَقُوا (الربع ٢)"] },
+      { id: 60, name: "الممتحنة", startRub: 237, rubList: ["يَا أَيُّهَا الَّذِينَ آمَنُوا لَا تَتَّخِذُوا عَدُوِّي وَعَدُوَّكُمْ أَوْلِيَاءَ (الربع ١)"] },
+      { id: 61, name: "الصف", startRub: 237, rubList: ["سَبَّحَ لِلَّهِ مَا فِي السَّمَاوَاتِ وَمَا فِي الْأَرْضِ (سورة الصف)"] },
+      { id: 62, name: "الجمعة", startRub: 238, rubList: ["يُسَبِّحُ لِلَّهِ مَا فِي السَّمَاوَاتِ (سورة الجمعة)"] },
+      { id: 63, name: "المنافقون", startRub: 238, rubList: ["إِذَا جَاءَكَ الْمُنَافِقُونَ (سورة المنافقون)"] },
+      { id: 64, name: "التغابن", startRub: 239, rubList: ["يُسَبِّحُ لِلَّهِ مَا فِي السَّمَاوَاتِ وَلَهُ الْمُلْكُ (سورة التغابن)"] },
+      { id: 65, name: "الطلاق", startRub: 239, rubList: ["يَا أَيُّهَا النَّبِيُّ إِذَا طَلَّقْتُمُ النِّسَاءَ (سورة الطلاق)"] },
+      { id: 66, name: "التحريم", startRub: 240, rubList: ["يَا أَيُّهَا النَّبِيُّ لِمَ تُحَرِّمُ مَا أَحَلَّ اللَّهُ لَكَ (سورة التحريم)"] },
+      { id: 67, name: "الملك", startRub: 233, rubList: ["تَبَارَكَ الَّذِي بِيَدِهِ الْمُلْكُ (سورة الملك)"] },
+      { id: 68, name: "القلم", startRub: 233, rubList: ["ن ۚ وَالْقَلَمِ وَمَا يَسْطُرُونَ (سورة القلم)"] },
+      { id: 69, name: "الحاقة", startRub: 234, rubList: ["الْحَاقَّةُ ۞ مَا الْحَاقَّةُ (سورة الحاقة)"] },
+      { id: 70, name: "المعارج", startRub: 234, rubList: ["سَأَلَ سَائِلٌ بِعَذَابٍ وَاقِعٍ (سورة المعارج)"] },
+      { id: 71, name: "نوح", startRub: 235, rubList: ["إِنَّا أَرْسَلْنَا نُوحًا إِلَى قَوْمِهِ (سورة نوح)"] },
+      { id: 72, name: "الجن", startRub: 235, rubList: ["قُلْ أُوحِيَ إِلَيَّ أَنَّهُ اسْتَمَعَ نَفَرٌ مِنَ الْجِنِّ (سورة الجن)"] },
+      { id: 73, name: "المزمل", startRub: 236, rubList: ["يَا أَيُّهَا الْمُزَّمِّلُ (سورة المزمل)"] },
+      { id: 74, name: "المدثر", startRub: 236, rubList: ["يَا أَيُّهَا الْمُدَّثِّرُ (سورة المدثر)"] },
+      { id: 75, name: "القيامة", startRub: 236, rubList: ["لَا أُقْسِمُ بِيَوْمِ الْقِيَامَةِ (سورة القيامة)"] },
+      { id: 76, name: "الإنسان", startRub: 236, rubList: ["هَلْ أَتَى عَلَى الْإِنْسَانِ حِينٌ مِنَ الدَّهْرِ (سورة الإنسان)"] },
+      { id: 77, name: "المرسلات", startRub: 236, rubList: ["وَالْمُرْسَلَاتِ عُرْفًا (سورة المرسلات)"] },
+      { id: 78, name: "النبأ", startRub: 237, rubList: ["عَمَّ يَتَسَاءَلُونَ (سورة النبأ)"] },
+      { id: 79, name: "النازعات", startRub: 237, rubList: ["وَالنَّازِعَاتِ غَرْقًا (سورة النازعات)"] },
+      { id: 80, name: "عبس", startRub: 237, rubList: ["عَبَسَ وَتَوَلَّى (سورة عبس)"] },
+      { id: 81, name: "التكوير", startRub: 237, rubList: ["إِذَا الشَّمْسُ كُوِّرَتْ (سورة التكوير)"] },
+      { id: 82, name: "الانفطار", startRub: 238, rubList: ["إِذَا السَّمَاءُ انْفَطَرَتْ (سورة الانفطار)"] },
+      { id: 83, name: "المطففين", startRub: 238, rubList: ["وَيْلٌ لِلْمُطَفِّفِينَ (سورة المطففين)"] },
+      { id: 84, name: "الانشقاق", startRub: 238, rubList: ["إِذَا السَّمَاءُ انْشَقَّتْ (سورة الانشقاق)"] },
+      { id: 85, name: "البروج", startRub: 238, rubList: ["وَالسَّمَاءِ ذَاتِ الْبُرُوجِ (سورة البروج)"] },
+      { id: 86, name: "الطارق", startRub: 239, rubList: ["وَالسَّمَاءِ وَالطَّارِقِ (سورة الطارق)"] },
+      { id: 87, name: "الأعلى", startRub: 239, rubList: ["سَبِّحِ اسْمَ رَبِّكَ الْأَعْلَى (سورة الأعلى)"] },
+      { id: 88, name: "الغاشية", startRub: 239, rubList: ["هَلْ أَتَاكَ حَدِيثُ الْغَاشِيَةِ (سورة الغاشية)"] },
+      { id: 89, name: "الفجر", startRub: 239, rubList: ["وَالْفَجْرِ ۞ وَلَيَالٍ عَشْرٍ (سورة الفجر)"] },
+      { id: 90, name: "البلد", startRub: 239, rubList: ["لَا أُقْسِمُ بِهَذَا الْبَلَدِ (سورة البلد)"] },
+      { id: 91, name: "الشمس", startRub: 240, rubList: ["وَالشَّمْسِ وَضُحَاهَا (سورة الشمس)"] },
+      { id: 92, name: "الليل", startRub: 240, rubList: ["وَاللَّيْلِ إِذَا يَغْشَى (سورة الليل)"] },
+      { id: 93, name: "الضحى", startRub: 240, rubList: ["وَالضُّحَى ۞ وَاللَّيْلِ إِذَا سَجَى (سورة الضحى)"] },
+      { id: 94, name: "الشرح", startRub: 240, rubList: ["أَلَمْ نَشْرَحْ لَكَ صَدْرَكَ (سورة الشرح)"] },
+      { id: 95, name: "التين", startRub: 240, rubList: ["وَالتِّينِ وَالزَّيْتُونِ (سورة التين)"] },
+      { id: 96, name: "العلق", startRub: 240, rubList: ["اقْرَأْ بِاسْمِ رَبِّكَ الَّذِي خَلَقَ (سورة العلق)"] },
+      { id: 97, name: "القدر", startRub: 240, rubList: ["إِنَّا أَنْزَلْنَاهُ فِي لَيْلَةِ الْقَدْرِ (سورة القدر)"] },
+      { id: 98, name: "البينة", startRub: 240, rubList: ["لَمْ يَكُنِ الَّذِينَ كَفَرُوا مِنْ أَهْلِ الْكِتَابِ (سورة البينة)"] },
+      { id: 99, name: "الزلزلة", startRub: 240, rubList: ["إِذَا زُلْزِلَتِ الْأَرْضُ زِلْزَالَهَا (سورة الزلزلة)"] },
+      { id: 100, name: "العاديات", startRub: 240, rubList: ["وَالْعَادِيَاتِ ضَبْحًا (سورة العاديات)"] },
+      { id: 101, name: "القارعة", startRub: 240, rubList: ["الْقَارِعَةُ ۞ مَا الْقَارِعَةُ (سورة القارعة)"] },
+      { id: 102, name: "التكاثر", startRub: 240, rubList: ["أَلْهَاكُمُ التَّكَاثُرُ (سورة التكاثر)"] },
+      { id: 103, name: "العصر", startRub: 240, rubList: ["وَالْعَصْرِ ۞ إِنَّ الْإِنْسَانَ لَفِي خُسْرٍ (سورة العصر)"] },
+      { id: 104, name: "الهمزة", startRub: 240, rubList: ["وَيْلٌ لِكُلِّ هُمَزَةٍ لُمَزَةٍ (سورة الهمزة)"] },
+      { id: 105, name: "الفيل", startRub: 240, rubList: ["أَلَمْ تَرَ كَيْفَ فَعَلَ رَبُّكَ بِأَصْحَابِ الْفِيلِ (سورة الفيل)"] },
+      { id: 106, name: "قريش", startRub: 240, rubList: ["لِإِيلَافِ قُرَيْشٍ (سورة قريش)"] },
+      { id: 107, name: "الماعون", startRub: 240, rubList: ["أَرَأَيْتَ الَّذِي يُكَذِّبُ بِالدِّينِ (سورة الماعون)"] },
+      { id: 108, name: "الكوثر", startRub: 240, rubList: ["إِنَّا أَعْطَيْنَاكَ الْكَوْثَرَ (سورة الكوثر)"] },
+      { id: 109, name: "الكافرون", startRub: 240, rubList: ["قُلْ يَا أَيُّهَا الْكَافِرُونَ (سورة الكافرون)"] },
+      { id: 110, name: "النصر", startRub: 240, rubList: ["إِذَا جَاءَ نَصْرُ اللَّهِ وَالْفَتْحُ (سورة النصر)"] },
+      { id: 111, name: "المسد", startRub: 240, rubList: ["تَبَّتْ يَدَا أَبِي لَهَبٍ وَتَبَّ (سورة المسد)"] },
+      { id: 112, name: "الإخلاص", startRub: 240, rubList: ["قُلْ هُوَ اللَّهُ أَحَدٌ (سورة الإخلاص)"] },
+      { id: 113, name: "الفلق", startRub: 240, rubList: ["قُلْ أَعُوذُ بِرَبِّ الْفَلَقِ (سورة الفلق)"] },
+      { id: 114, name: "الناس", startRub: 240, rubList: ["قُلْ أَعُوذُ بِرَبِّ النَّاسِ (سورة الناس)"] }
+    ];
+
+    /**
+     * =========================================================================
+     * 2. STATE MANAGEMENT, DATE ENGINE & AUTOMATIC ROLLOVER
+     * =========================================================================
+     */
+    const STORAGE_KEY = 'murajie_quran_v3';
+
+    const defaultState = {
+      items: [],                 // { id, surahId, surahName, rubOrder, mushafRubNum, title, addedAt }
+      recentAddedIds: [],        // Ordered list of recently added item IDs (last N = الماضي القريب)
+      pointerIndex: 0,           // Next unscheduled index in sorted items for الماضي البعيد
+      dailyNearLimit: 4,         // Default 4 rub's per day for الماضي القريب
+      dailyFarLimit: 5,          // Default 5 rub's per day for الماضي البعيد
+      cycleReviewedCount: 0,     // Progress within current full Khatmah revision
+      completedCycles: 0,        // Total completed Khatmah cycles
+      todaySession: {
+        date: '',                // YYYY-MM-DD
+        farTasks: [],            // [{ itemId, done: bool, carriedOver: bool, isExtra: bool }]
+        nearDoneIds: [],         // [itemId] completed today in الماضي القريب
+        carriedOverCount: 0      // Count of tasks rolled over from yesterday
+      },
+      historyLogs: {},           // { 'YYYY-MM-DD': { totalTasks, completedTasks, farDone, nearDone } }
+      darkMode: false
+    };
+
+    let state = loadState();
+    let activeTab = 'home';
+    let isReviewOpen = false;
+    let addMode = 'full';
+    let librarySearch = '';
+
+    function getLocalTodayISO() {
+      const now = new Date();
+      const offset = now.getTimezoneOffset();
+      const local = new Date(now.getTime() - offset * 60000);
+      return local.toISOString().split('T')[0];
+    }
+
+    function getFormattedDates() {
+      const now = new Date();
+      let hijri = '';
+      try {
+        hijri = new Intl.DateTimeFormat('ar-SA-u-ca-islamic-umalqura', {
+          day: 'numeric',
+          month: 'long',
+          year: 'numeric'
+        }).format(now);
+      } catch (e) {
+        hijri = '';
+      }
+
+      const gregorian = new Intl.DateTimeFormat('ar-EG', {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric'
+      }).format(now);
+
+      return { hijri, gregorian };
+    }
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY) || localStorage.getItem('murajie_quran_v2');
+        if (!raw) return JSON.parse(JSON.stringify(defaultState));
+        const parsed = JSON.parse(raw);
+        return { ...JSON.parse(JSON.stringify(defaultState)), ...parsed };
+      } catch (e) {
+        return JSON.parse(JSON.stringify(defaultState));
+      }
+    }
+
+    function saveState() {
+      try {
+        sortItemsInMushafOrder();
+        recordTodaySnapshot();
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        updateBadges();
+      } catch (e) {
+        showToast('تعذر حفظ البيانات محلياً', 'error');
+      }
+    }
+
+    function sortItemsInMushafOrder() {
+      const currentTargetId = state.items[state.pointerIndex]?.id;
+      state.items.sort((a, b) => {
+        if (a.surahId !== b.surahId) return a.surahId - b.surahId;
+        return a.rubOrder - b.rubOrder;
+      });
+      if (state.items.length === 0) {
+        state.pointerIndex = 0;
+      } else if (currentTargetId) {
+        const idx = state.items.findIndex(i => i.id === currentTargetId);
+        state.pointerIndex = idx !== -1 ? idx : (state.pointerIndex % state.items.length);
+      } else {
+        state.pointerIndex = state.pointerIndex % state.items.length;
+      }
+    }
+
+    /**
+     * Gets the last N added items for "الماضي القريب" (Daily Recitation)
+     */
+    function getNearPastItems() {
+      if (state.items.length === 0) return [];
+      const limit = state.dailyNearLimit || 4;
+      const validRecent = state.recentAddedIds
+        .map(id => state.items.find(it => it.id === id))
+        .filter(Boolean);
+
+      if (validRecent.length >= limit) {
+        return validRecent.slice(0, limit);
+      }
+
+      const sortedByRecent = [...state.items].sort((a, b) => b.addedAt - a.addedAt);
+      return sortedByRecent.slice(0, Math.min(limit, sortedByRecent.length));
+    }
+
+    /**
+     * Ensures today's session is initialized for current date and rolls over
+     * any incomplete tasks from the previous day.
+     */
+    function syncDailySession() {
+      const todayISO = getLocalTodayISO();
+      sortItemsInMushafOrder();
+
+      state.todaySession.farTasks = (state.todaySession.farTasks || []).filter(t =>
+        state.items.some(it => it.id === t.itemId)
+      );
+      state.todaySession.nearDoneIds = (state.todaySession.nearDoneIds || []).filter(id =>
+        state.items.some(it => it.id === id)
+      );
+
+      if (state.todaySession.date === todayISO) {
+        if (state.items.length > 0 && state.todaySession.farTasks.length === 0) {
+          populateFarTasksForToday([]);
+          saveState();
+        }
+        return;
+      }
+
+      if (state.todaySession.date) {
+        recordSnapshotForDate(state.todaySession.date);
+      }
+
+      const uncompletedFromYesterday = (state.todaySession.farTasks || [])
+        .filter(t => !t.done && state.items.some(it => it.id === t.itemId))
+        .map(t => ({ itemId: t.itemId, done: false, carriedOver: true }));
+
+      state.todaySession = {
+        date: todayISO,
+        farTasks: [],
+        nearDoneIds: [],
+        carriedOverCount: uncompletedFromYesterday.length
+      };
+
+      if (state.items.length > 0) {
+        populateFarTasksForToday(uncompletedFromYesterday);
+      }
+
+      saveState();
+
+      if (uncompletedFromYesterday.length > 0) {
+        setTimeout(() => {
+          showToast(`تم ترحيل ${uncompletedFromYesterday.length} ${uncompletedFromYesterday.length === 1 ? 'ربع' : 'أرباع'} متبقية من الأمس لورد اليوم 📅`, 'warning');
+        }, 400);
+      }
+    }
+
+    function populateFarTasksForToday(carriedTasks) {
+      const total = state.items.length;
+      if (total === 0) return;
+
+      const tasks = [...carriedTasks];
+      const existingIds = new Set(tasks.map(t => t.itemId));
+      const targetCount = Math.min(state.dailyFarLimit, total);
+
+      let safety = 0;
+      while (tasks.length < targetCount && safety < total) {
+        const candidate = state.items[state.pointerIndex % total];
+        state.pointerIndex = (state.pointerIndex + 1) % total;
+        if (!existingIds.has(candidate.id)) {
+          tasks.push({ itemId: candidate.id, done: false, carriedOver: false });
+          existingIds.add(candidate.id);
+        }
+        safety++;
+      }
+
+      state.todaySession.farTasks = tasks;
+    }
+
+    function addExtraRubToToday() {
+      const total = state.items.length;
+      if (total === 0) return;
+
+      const currentIds = new Set(state.todaySession.farTasks.map(t => t.itemId));
+      if (currentIds.size >= total) {
+        showToast('لقد أضفت جميع أرباع محفوظك في قائمة اليوم ما شاء الله!', 'warning');
+        return;
+      }
+
+      let addedItem = null;
+      let safety = 0;
+      while (safety < total) {
+        const candidate = state.items[state.pointerIndex % total];
+        state.pointerIndex = (state.pointerIndex + 1) % total;
+        if (!currentIds.has(candidate.id)) {
+          state.todaySession.farTasks.push({
+            itemId: candidate.id,
+            done: false,
+            carriedOver: false,
+            isExtra: true
+          });
+          addedItem = candidate;
+          break;
+        }
+        safety++;
+      }
+
+      saveState();
+      renderAll();
+      if (addedItem) {
+        showToast(`تمت إضافة ربع إضافي من سورة ${addedItem.surahName} لورد اليوم ✨`);
+      }
+    }
+
+    function toggleFarTaskDone(itemId) {
+      const task = state.todaySession.farTasks.find(t => t.itemId === itemId);
+      if (!task) return;
+
+      task.done = !task.done;
+
+      if (task.done) {
+        state.cycleReviewedCount += 1;
+        if (state.items.length > 0 && state.cycleReviewedCount >= state.items.length) {
+          state.cycleReviewedCount = 0;
+          state.completedCycles += 1;
+          showToast(`مبارك! أتممت دورة مراجعة كاملة (${state.completedCycles}) 🎉`, 'success');
+        }
+      } else {
+        state.cycleReviewedCount = Math.max(0, state.cycleReviewedCount - 1);
+      }
+
+      saveState();
+      renderAll();
+    }
+
+    function toggleNearTaskDone(itemId) {
+      const idx = state.todaySession.nearDoneIds.indexOf(itemId);
+      if (idx === -1) {
+        state.todaySession.nearDoneIds.push(itemId);
+      } else {
+        state.todaySession.nearDoneIds.splice(idx, 1);
+      }
+      saveState();
+      renderAll();
+    }
+
+    function recordTodaySnapshot() {
+      const todayISO = getLocalTodayISO();
+      recordSnapshotForDate(todayISO);
+    }
+
+    function recordSnapshotForDate(dateISO) {
+      if (!dateISO) return;
+      const nearItems = getNearPastItems();
+      const farTasks = state.todaySession.farTasks || [];
+      const nearDoneCount = nearItems.filter(it => (state.todaySession.nearDoneIds || []).includes(it.id)).length;
+      const farDoneCount = farTasks.filter(t => t.done).length;
+
+      const totalTasks = nearItems.length + farTasks.length;
+      const completedTasks = nearDoneCount + farDoneCount;
+
+      state.historyLogs[dateISO] = {
+        totalTasks,
+        completedTasks,
+        farDone: farDoneCount,
+        farTotal: farTasks.length,
+        nearDone: nearDoneCount,
+        nearTotal: nearItems.length
+      };
+    }
+
+    /**
+     * =========================================================================
+     * 3. FULL-SCREEN REVIEW SESSION & ADD HIFZ MODAL CONTROLS
+     * =========================================================================
+     */
+    function openReviewSession() {
+      if (state.items.length === 0) {
+        openAddModal();
+        return;
+      }
+      isReviewOpen = true;
+      const overlay = document.getElementById('reviewFullScreen');
+      overlay.classList.remove('hidden');
+      overlay.classList.add('flex');
+      renderReviewFullScreen();
+    }
+
+    function closeReviewSession() {
+      isReviewOpen = false;
+      const overlay = document.getElementById('reviewFullScreen');
+      overlay.classList.add('hidden');
+      overlay.classList.remove('flex');
+      renderApp();
+    }
+
+    function openAddModal() {
+      const modal = document.getElementById('addHifzModal');
+      const panel = document.getElementById('addHifzSheetPanel');
+      panel.style.transform = '';
+      panel.classList.remove('bottom-sheet-exit');
+      panel.classList.add('bottom-sheet-enter');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      renderAddModalBody();
+    }
+
+    function closeAddModal() {
+      const modal = document.getElementById('addHifzModal');
+      const panel = document.getElementById('addHifzSheetPanel');
+      panel.classList.remove('bottom-sheet-enter');
+      panel.classList.add('bottom-sheet-exit');
+      setTimeout(() => {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+        panel.classList.remove('bottom-sheet-exit');
+        panel.style.transform = '';
+      }, 220);
+    }
+
+    function handleSheetBackdropClick(e) {
+      if (e.target && e.target.id === 'addHifzModal') {
+        closeAddModal();
+      }
+    }
+
+    function initBottomSheetGestures() {
+      const handle = document.getElementById('sheetDragHandle');
+      const panel = document.getElementById('addHifzSheetPanel');
+      if (!handle || !panel) return;
+
+      let startY = 0;
+      let currentY = 0;
+      let isDragging = false;
+
+      handle.addEventListener('touchstart', (e) => {
+        startY = e.touches[0].clientY;
+        isDragging = true;
+        panel.style.transition = 'none';
+      }, { passive: true });
+
+      handle.addEventListener('touchmove', (e) => {
+        if (!isDragging) return;
+        currentY = e.touches[0].clientY - startY;
+        if (currentY > 0) {
+          panel.style.transform = `translateY(${currentY}px)`;
+        }
+      }, { passive: true });
+
+      handle.addEventListener('touchend', () => {
+        if (!isDragging) return;
+        isDragging = false;
+        panel.style.transition = 'transform 0.22s ease';
+        if (currentY > 90) {
+          closeAddModal();
+        } else {
+          panel.style.transform = 'translateY(0)';
+        }
+        currentY = 0;
+      });
+    }
+
+    /**
+     * =========================================================================
+     * 4. THEME, TOASTS & CUSTOM MODALS
+     * =========================================================================
+     */
+    function applyTheme() {
+      const html = document.documentElement;
+      const sun = document.getElementById('themeIconSun');
+      const moon = document.getElementById('themeIconMoon');
+      if (state.darkMode) {
+        html.setAttribute('data-theme', 'dark');
+        sun.classList.remove('hidden');
+        moon.classList.add('hidden');
+      } else {
+        html.setAttribute('data-theme', 'light');
+        sun.classList.add('hidden');
+        moon.classList.remove('hidden');
+      }
+    }
+
+    function toggleTheme() {
+      state.darkMode = !state.darkMode;
+      applyTheme();
+      saveState();
+      renderAll();
+    }
+
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+
+      let bgStyle = 'background-color: var(--bg-surface); color: var(--text-primary); border: 1px solid var(--border-subtle);';
+      if (type === 'success') {
+        bgStyle = 'background-color: var(--bg-success-soft); color: var(--color-success); border: 1px solid var(--color-success);';
+      } else if (type === 'warning') {
+        bgStyle = 'background-color: var(--bg-warning-soft); color: var(--color-warning); border: 1px solid var(--color-warning);';
+      } else if (type === 'error') {
+        bgStyle = 'background-color: var(--bg-error-soft); color: var(--color-error); border: 1px solid var(--color-error);';
+      }
+
+      toast.style.cssText = bgStyle;
+      toast.className = 'px-4 py-3 rounded-2xl shadow-lg text-xs font-bold flex items-center justify-center text-center animate-fade-in w-full';
+      toast.textContent = message;
+      container.appendChild(toast);
+
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(-6px)';
+        toast.style.transition = 'all 0.25s ease';
+        setTimeout(() => toast.remove(), 250);
+      }, 3000);
+    }
+
+    function openModal({ title, bodyHtml, buttons }) {
+      const modal = document.getElementById('customModal');
+      document.getElementById('modalTitle').textContent = title;
+      document.getElementById('modalBody').innerHTML = bodyHtml;
+      const actionsEl = document.getElementById('modalActions');
+      actionsEl.innerHTML = '';
+
+      buttons.forEach(btn => {
+        const b = document.createElement('button');
+        b.textContent = btn.label;
+        b.className = btn.className || 'px-4 py-2 rounded-xl text-xs font-bold transition';
+        if (btn.style) b.style.cssText = btn.style;
+        b.onclick = () => {
+          closeModal();
+          if (btn.onClick) btn.onClick();
+        };
+        actionsEl.appendChild(b);
+      });
+
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeModal() {
+      const modal = document.getElementById('customModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    /**
+     * =========================================================================
+     * 5. NAVIGATION & BADGES (3 TABS ONLY: HOME / LIBRARY / SETTINGS)
+     * =========================================================================
+     */
+    function switchTab(tab) {
+      activeTab = tab;
+      document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.style.color = 'var(--text-secondary)';
+        const pill = btn.querySelector('.nav-pill');
+        pill.style.backgroundColor = 'transparent';
+      });
+
+      const activeBtn = document.getElementById(`nav-${tab}`);
+      if (activeBtn) {
+        activeBtn.style.color = 'var(--color-primary)';
+        const pill = activeBtn.querySelector('.nav-pill');
+        pill.style.backgroundColor = 'var(--color-primary-soft)';
+      }
+
+      renderApp();
+    }
+
+    function updateBadges() {
+      const badge = document.getElementById('libraryBadge');
+      if (state.items.length > 0) {
+        badge.textContent = state.items.length;
+        badge.classList.remove('hidden');
+      } else {
+        badge.classList.add('hidden');
+      }
+
+      const { hijri, gregorian } = getFormattedDates();
+      const dateEl = document.getElementById('headerDateBadge');
+      if (dateEl) {
+        dateEl.textContent = hijri ? `${hijri} • ${gregorian}` : gregorian;
+      }
+    }
+
+    /**
+     * =========================================================================
+     * 6. ADDING HIFZ & LIBRARY MANAGEMENT
+     * =========================================================================
+     */
+    function registerNewlyAddedIds(newIds) {
+      const combined = [...newIds.reverse(), ...state.recentAddedIds];
+      state.recentAddedIds = [...new Set(combined)].slice(0, 25);
+    }
+
+    function addFullSurah(surahId, silent = false) {
+      const surah = QURAN_DATA.find(s => s.id === Number(surahId));
+      if (!surah) return 0;
+
+      const addedIds = [];
+      surah.rubList.forEach((rubTitle, index) => {
+        const exists = state.items.some(item => item.surahId === surah.id && item.rubOrder === index + 1);
+        if (!exists) {
+          const newId = `s${surah.id}_r${index + 1}_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+          state.items.push({
+            id: newId,
+            surahId: surah.id,
+            surahName: surah.name,
+            rubOrder: index + 1,
+            mushafRubNum: Math.min(240, surah.startRub + index),
+            title: rubTitle,
+            addedAt: Date.now() + index
+          });
+          addedIds.push(newId);
+        }
+      });
+
+      if (addedIds.length > 0) {
+        registerNewlyAddedIds(addedIds);
+        if (state.todaySession.farTasks.length === 0) {
+          sortItemsInMushafOrder();
+          populateFarTasksForToday([]);
+        }
+        saveState();
+        if (!silent) {
+          closeAddModal();
+          renderAll();
+          showToast(`تمت إضافة سورة ${surah.name} (${addedIds.length} ${addedIds.length === 1 ? 'ربع' : 'أرباع'}) بنجاح ✓`, 'success');
+        }
+      } else if (!silent) {
+        showToast(`سورة ${surah.name} مضافة بالكامل مسبقاً`, 'warning');
+      }
+      return addedIds.length;
+    }
+
+    function addUpToRub(surahId, maxRubOrder, silent = false) {
+      const surah = QURAN_DATA.find(s => s.id === Number(surahId));
+      if (!surah) return 0;
+
+      const addedIds = [];
+      for (let i = 0; i < maxRubOrder; i++) {
+        const rubTitle = surah.rubList[i];
+        const exists = state.items.some(item => item.surahId === surah.id && item.rubOrder === i + 1);
+        if (!exists) {
+          const newId = `s${surah.id}_r${i + 1}_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+          state.items.push({
+            id: newId,
+            surahId: surah.id,
+            surahName: surah.name,
+            rubOrder: i + 1,
+            mushafRubNum: Math.min(240, surah.startRub + i),
+            title: rubTitle,
+            addedAt: Date.now() + i
+          });
+          addedIds.push(newId);
+        }
+      }
+
+      if (addedIds.length > 0) {
+        registerNewlyAddedIds(addedIds);
+        if (state.todaySession.farTasks.length === 0) {
+          sortItemsInMushafOrder();
+          populateFarTasksForToday([]);
+        }
+        saveState();
+        if (!silent) {
+          closeAddModal();
+          renderAll();
+          showToast(`تمت إضافة ${addedIds.length} أرباع من سورة ${surah.name} ✓`, 'success');
+        }
+      } else if (!silent) {
+        showToast('هذه الأرباع مضافة مسبقاً في قائمتك', 'warning');
+      }
+      return addedIds.length;
+    }
+
+    function addSingleOrCustomRub(surahId, rubOrder, customTitle) {
+      const surah = QURAN_DATA.find(s => s.id === Number(surahId));
+      if (!surah) return;
+
+      const order = Number(rubOrder) || (surah.rubList.length + 1);
+      const defaultTitle = surah.rubList[order - 1] || `ربع مخصص (${order})`;
+      const finalTitle = (customTitle && customTitle.trim().length > 0) ? customTitle.trim() : defaultTitle;
+      const newId = `s${surah.id}_r${order}_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+
+      state.items.push({
+        id: newId,
+        surahId: surah.id,
+        surahName: surah.name,
+        rubOrder: order,
+        mushafRubNum: Math.min(240, surah.startRub + order - 1),
+        title: finalTitle,
+        addedAt: Date.now()
+      });
+
+      registerNewlyAddedIds([newId]);
+      if (state.todaySession.farTasks.length === 0) {
+        sortItemsInMushafOrder();
+        populateFarTasksForToday([]);
+      }
+      saveState();
+      closeAddModal();
+      renderAll();
+      showToast(`تمت إضافة الربع إلى سورة ${surah.name} وتحديث الماضي القريب ✓`, 'success');
+    }
+
+    function loadSampleDemoData() {
+      addFullSurah(1, true);     // الفاتحة
+      addFullSurah(2, true);     // البقرة (20)
+      addFullSurah(3, true);     // آل عمران (10)
+      addUpToRub(4, 4, true);    // النساء حتى الربع 4
+      sortItemsInMushafOrder();
+      state.pointerIndex = 0;
+      state.todaySession = {
+        date: getLocalTodayISO(),
+        farTasks: [],
+        nearDoneIds: [],
+        carriedOverCount: 0
+      };
+      populateFarTasksForToday([]);
+      saveState();
+      renderAll();
+      showToast('تم تحميل المحفوظ التجريبي (الفاتحة، البقرة، آل عمران، وأول ٤ أرباع من النساء) ✓', 'success');
+    }
+
+    function setPointerToItem(itemId) {
+      sortItemsInMushafOrder();
+      const idx = state.items.findIndex(i => i.id === itemId);
+      if (idx === -1) return;
+
+      state.pointerIndex = idx;
+      state.todaySession.farTasks = [];
+      populateFarTasksForToday([]);
+      saveState();
+      renderAll();
+      showToast(`تم ضبط نقطة البداية من سورة ${state.items[idx].surahName} وتحديث ورد اليوم ✓`, 'success');
+      switchTab('home');
+    }
+
+    function deleteRubItem(itemId) {
+      const item = state.items.find(i => i.id === itemId);
+      if (!item) return;
+
+      openModal({
+        title: 'حذف ربع من المحفوظات',
+        bodyHtml: `هل تريد حذف <strong>"${item.title}"</strong> من سورة <strong>${item.surahName}</strong>؟`,
+        buttons: [
+          {
+            label: 'إلغاء',
+            className: 'px-4 py-2 rounded-xl text-xs font-bold ds-surface-alt ds-text-primary'
+          },
+          {
+            label: 'نعم، احذف',
+            className: 'px-4 py-2 rounded-xl text-xs font-bold text-white',
+            style: 'background-color: var(--color-error);',
+            onClick: () => {
+              state.items = state.items.filter(i => i.id !== itemId);
+              state.recentAddedIds = state.recentAddedIds.filter(id => id !== itemId);
+              state.todaySession.farTasks = state.todaySession.farTasks.filter(t => t.itemId !== itemId);
+              state.todaySession.nearDoneIds = state.todaySession.nearDoneIds.filter(id => id !== itemId);
+              saveState();
+              renderAll();
+              showToast('تم حذف الربع من القائمة');
+            }
+          }
+        ]
+      });
+    }
+
+    function deleteSurahGroup(surahId, surahName) {
+      openModal({
+        title: `حذف سورة ${surahName}`,
+        bodyHtml: `هل أنت متأكد من حذف جميع أرباع سورة <strong>${surahName}</strong> من محفوظاتك؟`,
+        buttons: [
+          {
+            label: 'إلغاء',
+            className: 'px-4 py-2 rounded-xl text-xs font-bold ds-surface-alt ds-text-primary'
+          },
+          {
+            label: 'حذف السورة',
+            className: 'px-4 py-2 rounded-xl text-xs font-bold text-white',
+            style: 'background-color: var(--color-error);',
+            onClick: () => {
+              const removedIds = new Set(state.items.filter(i => i.surahId === surahId).map(i => i.id));
+              state.items = state.items.filter(i => i.surahId !== surahId);
+              state.recentAddedIds = state.recentAddedIds.filter(id => !removedIds.has(id));
+              state.todaySession.farTasks = state.todaySession.farTasks.filter(t => !removedIds.has(t.itemId));
+              state.todaySession.nearDoneIds = state.todaySession.nearDoneIds.filter(id => !removedIds.has(id));
+              saveState();
+              renderAll();
+              showToast(`تم حذف سورة ${surahName}`);
+            }
+          }
+        ]
+      });
+    }
+
+    /**
+     * =========================================================================
+     * 7. DASHBOARD ANALYTICS & ENCOURAGEMENT LOGIC
+     * =========================================================================
+     */
+    function calculateStreak() {
+      let streak = 0;
+      const now = new Date();
+      for (let i = 0; i < 60; i++) {
+        const d = new Date(now.getTime() - i * 86400000);
+        const offset = d.getTimezoneOffset();
+        const iso = new Date(d.getTime() - offset * 60000).toISOString().split('T')[0];
+        const log = state.historyLogs[iso];
+        if (log && log.completedTasks > 0) {
+          streak++;
+        } else if (i > 0) {
+          break;
+        }
+      }
+      return streak;
+    }
+
+    function getYesterdayAnalysis() {
+      const now = new Date();
+      const yest = new Date(now.getTime() - 86400000);
+      const offset = yest.getTimezoneOffset();
+      const yestISO = new Date(yest.getTime() - offset * 60000).toISOString().split('T')[0];
+      const yLog = state.historyLogs[yestISO];
+
+      if (!yLog || yLog.totalTasks === 0) {
+        return {
+          status: 'neutral',
+          title: 'بداية متجددة مع كتاب الله',
+          message: 'اجعل لك اليوم ورداً ثابتاً ولو يسيراً؛ فأحب الأعمال إلى الله أدومها وإن قل.'
+        };
+      }
+
+      const pct = Math.round((yLog.completedTasks / yLog.totalTasks) * 100);
+      if (pct >= 100) {
+        return {
+          status: 'success',
+          title: 'همة الأمس كانت عالية ما شاء الله! 🌟',
+          message: `أتممت بالأمس (${yLog.completedTasks} من ${yLog.totalTasks}) من وردك كاملاً. حافظ على هذا الثبات اليوم أيضاً!`
+        };
+      } else if (pct >= 50) {
+        return {
+          status: 'warning',
+          title: 'خطوة طيبة بالأمس، واليوم أكمل ✨',
+          message: `أنجزت بالأمس ${pct}% من وردك (${yLog.completedTasks} من ${yLog.totalTasks})، وقد رحّلنا لك المتبقي لتتمه بهمة اليوم.`
+        };
+      } else {
+        return {
+          status: 'error',
+          title: 'رسالة تشجيع: لا تستسلم للفتور 🤍',
+          message: `كان إنجاز الأمس ضعيفاً (${yLog.completedTasks} من ${yLog.totalTasks})، لا بأس! استعن بالله وابدأ الآن بربع واحد فقط وسينفتح لك الباب.`
+        };
+      }
+    }
+
+    function getLast7DaysChartData() {
+      const days = [];
+      const dayNames = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+      const now = new Date();
+
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date(now.getTime() - i * 86400000);
+        const offset = d.getTimezoneOffset();
+        const iso = new Date(d.getTime() - offset * 60000).toISOString().split('T')[0];
+        const log = state.historyLogs[iso];
+        const pct = (log && log.totalTasks > 0) ? Math.min(100, Math.round((log.completedTasks / log.totalTasks) * 100)) : 0;
+        days.push({
+          iso,
+          label: i === 0 ? 'اليوم' : dayNames[d.getDay()],
+          pct,
+          completed: log ? log.completedTasks : 0,
+          total: log ? log.totalTasks : 0
+        });
+      }
+      return days;
+    }
+
+    function getTodaySummaryData() {
+      const nearItems = getNearPastItems();
+      const farTasks = state.todaySession.farTasks || [];
+      const nearDoneCount = nearItems.filter(it => state.todaySession.nearDoneIds.includes(it.id)).length;
+      const farDoneCount = farTasks.filter(t => t.done).length;
+      const totalToday = nearItems.length + farTasks.length;
+      const doneToday = nearDoneCount + farDoneCount;
+      const todayPct = totalToday > 0 ? Math.round((doneToday / totalToday) * 100) : 0;
+
+      // Collect unique Surah names required today (both near & far)
+      const surahNamesSet = new Set();
+      nearItems.forEach(it => surahNamesSet.add(it.surahName));
+      farTasks.forEach(t => {
+        const it = state.items.find(x => x.id === t.itemId);
+        if (it) surahNamesSet.add(it.surahName);
+      });
+
+      return {
+        nearItems,
+        farTasks,
+        nearDoneCount,
+        farDoneCount,
+        totalToday,
+        doneToday,
+        todayPct,
+        surahNames: Array.from(surahNamesSet)
+      };
+    }
+
+    /**
+     * =========================================================================
+     * 8. SHARING & BACKUP
+     * =========================================================================
+     */
+    function copyTextFallback(text) {
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      textarea.style.position = 'fixed';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.select();
+      try {
+        document.execCommand('copy');
+        showToast('تم النسخ إلى الحافظة بنجاح ✓', 'success');
+      } catch (e) {
+        showToast('تعذر النسخ تلقائياً', 'error');
+      }
+      document.body.removeChild(textarea);
+    }
+
+    function shareTodayAchievement() {
+      const { hijri, gregorian } = getFormattedDates();
+      const summary = getTodaySummaryData();
+      const farDoneTasks = summary.farTasks.filter(t => t.done);
+
+      let msg = `📖 *تقرير المراجعة اليومية - مُراجِع القرآن*\n`;
+      msg += `📅 ${hijri ? hijri + ' | ' : ''}${gregorian}\n\n`;
+
+      msg += `🔹 *الماضي القريب (تسميع):* ${summary.nearDoneCount} من ${summary.nearItems.length}\n`;
+      msg += `🔸 *الماضي البعيد (مراجعة):* ${summary.farDoneCount} من ${summary.farTasks.length}\n\n`;
+
+      if (farDoneTasks.length > 0) {
+        msg += `✅ الأرباع التي تمت مراجعتها اليوم:\n`;
+        farDoneTasks.forEach((t, i) => {
+          const item = state.items.find(it => it.id === t.itemId);
+          if (item) msg += `${i + 1}. سورة ${item.surahName}: ${item.title}\n`;
+        });
+      }
+
+      msg += `\n📊 إجمالي المحفوظ: ${state.items.length} ربع | ختمات المراجعة: ${state.completedCycles}`;
+
+      if (navigator.share) {
+        navigator.share({ title: 'ورد المراجعة اليومي', text: msg }).catch(() => {});
+      } else {
+        copyTextFallback(msg);
+      }
+    }
+
+    function exportBackupData() {
+      const dataStr = JSON.stringify(state);
+      openModal({
+        title: 'تصدير نسخة احتياطية',
+        bodyHtml: `
+          <p class="mb-2 text-xs">انسخ هذا الكود واحفظه في ملاحظاتك أو أرسله لنفسك لاستعادته على أي هاتف:</p>
+          <textarea readonly rows="5" class="w-full p-2.5 text-xs font-mono rounded-xl ds-surface-alt ds-text-primary focus:outline-none">${dataStr}</textarea>
+        `,
+        buttons: [
+          { label: 'إغلاق', className: 'px-4 py-2 rounded-xl text-xs font-bold ds-surface-alt ds-text-primary' },
+          {
+            label: 'نسخ الكود',
+            className: 'px-4 py-2 rounded-xl text-xs font-bold ds-btn-primary',
+            onClick: () => copyTextFallback(dataStr)
+          }
+        ]
+      });
+    }
+
+    function openImportBackupModal() {
+      openModal({
+        title: 'استعادة نسخة احتياطية',
+        bodyHtml: `
+          <p class="mb-2 text-xs">الصق كود النسخة الاحتياطية هنا لاسترجاع محفوظاتك:</p>
+          <textarea id="backupImportBox" placeholder='{"items":[...]}' rows="5" class="w-full p-2.5 text-xs font-mono rounded-xl ds-surface-alt ds-text-primary focus:outline-none"></textarea>
+        `,
+        buttons: [
+          { label: 'إلغاء', className: 'px-4 py-2 rounded-xl text-xs font-bold ds-surface-alt ds-text-primary' },
+          {
+            label: 'استعادة البيانات',
+            className: 'px-4 py-2 rounded-xl text-xs font-bold ds-btn-primary',
+            onClick: () => {
+              const raw = document.getElementById('backupImportBox')?.value?.trim();
+              if (!raw) return;
+              try {
+                const parsed = JSON.parse(raw);
+                if (!Array.isArray(parsed.items)) throw new Error('Invalid');
+                state = { ...JSON.parse(JSON.stringify(defaultState)), ...parsed };
+                applyTheme();
+                syncDailySession();
+                renderAll();
+                showToast('تمت استعادة البيانات بنجاح ✓', 'success');
+              } catch (e) {
+                showToast('كود النسخة الاحتياطية غير صحيح', 'error');
+              }
+            }
+          }
+        ]
+      });
+    }
+
+    /**
+     * =========================================================================
+     * 9. RENDER VIEWS
+     * =========================================================================
+     */
+    function renderAll() {
+      renderApp();
+      if (isReviewOpen) {
+        renderReviewFullScreen();
+      }
+    }
+
+    function renderApp() {
+      const container = document.getElementById('appContent');
+      if (activeTab === 'home') {
+        container.innerHTML = renderHomeDashboardView();
+      } else if (activeTab === 'library') {
+        container.innerHTML = renderLibraryView();
+      } else if (activeTab === 'settings') {
+        container.innerHTML = renderSettingsView();
+      }
+    }
+
+    /* ---------------- TAB 1: HOME (DASHBOARD + TODAY'S WIRD SUMMARY CARD) ---------------- */
+    function renderHomeDashboardView() {
+      if (state.items.length === 0) {
+        return `
+          <div class="ds-surface rounded-3xl p-7 text-center mt-2 animate-fade-in">
+            <div class="w-16 h-16 mx-auto rounded-2xl flex items-center justify-center mb-4" style="background-color: var(--color-primary-soft); color: var(--color-primary);">
+              <svg class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+              </svg>
+            </div>
+            <h2 class="text-lg font-bold ds-text-primary mb-2">أهلاً بك في مُتعاهِد القرآن</h2>
+            <p class="text-sm ds-text-secondary leading-relaxed mb-6">
+              اضغط على زر <strong>(+)</strong> العائم لإضافة السور التي تحفظها، ليجهز لك التطبيق وردك اليومي من الماضي القريب والماضي البعيد.
+            </p>
+            <div class="space-y-2.5">
+              <button onclick="openAddModal()" class="w-full py-3.5 px-5 rounded-2xl ds-btn-primary font-bold text-sm flex items-center justify-center gap-2">
+                <span>+ أضف محفوظك الآن</span>
+              </button>
+              <button onclick="loadSampleDemoData()" class="w-full py-3 px-5 rounded-2xl ds-btn-soft font-bold text-xs flex items-center justify-center gap-2">
+                <span>✨ تجربة سريعة (تحميل الفاتحة والبقرة وآل عمران)</span>
+              </button>
+            </div>
+          </div>
+        `;
+      }
+
+      const summary = getTodaySummaryData();
+      const totalSaved = state.items.length;
+      const khatmahPct = totalSaved > 0 ? Math.min(100, Math.round((state.cycleReviewedCount / totalSaved) * 100)) : 0;
+      const streak = calculateStreak();
+      const yest = getYesterdayAnalysis();
+      const chartDays = getLast7DaysChartData();
+
+      let yestStyle = 'background-color: var(--bg-info-soft); color: var(--color-info); border-color: var(--color-info);';
+      if (yest.status === 'success') yestStyle = 'background-color: var(--bg-success-soft); color: var(--color-success); border-color: var(--color-success);';
+      else if (yest.status === 'warning') yestStyle = 'background-color: var(--bg-warning-soft); color: var(--color-warning); border-color: var(--color-warning);';
+      else if (yest.status === 'error') yestStyle = 'background-color: var(--bg-error-soft); color: var(--color-error); border-color: var(--color-error);';
+
+      return `
+        <div class="space-y-4 animate-fade-in">
+
+          <!-- 1. TODAY'S WIRD SUMMARY CARD (Actionable Entry to Full-Screen Review) -->
+          <div class="ds-surface rounded-3xl p-5 relative overflow-hidden">
+            <div class="flex items-start justify-between gap-2 mb-3">
+              <div>
+                <span class="inline-flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1 rounded-lg mb-1.5" style="background-color: var(--color-primary-soft); color: var(--color-primary);">
+                  📖 ورد اليوم
+                </span>
+                <h2 class="text-xl font-bold ds-text-primary tabular-nums">
+                  ${summary.totalToday} ${summary.totalToday === 1 ? 'ربع' : 'أرباع'} مطلوبة اليوم
+                </h2>
+                <p class="text-xs ds-text-secondary mt-0.5 tabular-nums">
+                  (${summary.nearItems.length} ماضي قريب • ${summary.farTasks.length} ماضي بعيد)
+                </p>
+              </div>
+
+              <div class="text-left tabular-nums">
+                <span class="text-2xl font-bold" style="color: ${summary.todayPct === 100 ? 'var(--color-success)' : 'var(--color-primary)'};">
+                  ${summary.doneToday}/${summary.totalToday}
+                </span>
+                <span class="block text-[10px] font-semibold ds-text-secondary">منجز اليوم</span>
+              </div>
+            </div>
+
+            <!-- Surahs Tags Required Today -->
+            <div class="mb-4">
+              <span class="text-[11px] font-semibold ds-text-secondary block mb-1.5">السور المطلوب مراجعتها اليوم:</span>
+              <div class="flex flex-wrap gap-1.5">
+                ${summary.surahNames.map(name => `
+                  <span class="text-xs font-bold px-2.5 py-1 rounded-xl ds-surface-alt ds-text-primary">
+                    سورة ${name}
+                  </span>
+                `).join('')}
+              </div>
+            </div>
+
+            <!-- Progress Bar -->
+            <div class="w-full h-2.5 rounded-full overflow-hidden mb-4" style="background-color: var(--bg-surface-alt);">
+              <div class="h-full rounded-full transition-all duration-500" style="width: ${summary.todayPct}%; background-color: ${summary.todayPct === 100 ? 'var(--color-success)' : 'var(--color-primary)'};"></div>
+            </div>
+
+            ${state.todaySession.carriedOverCount > 0 ? `
+              <div class="mb-3 px-3 py-2 rounded-xl text-xs font-semibold flex items-center gap-2" style="background-color: var(--bg-warning-soft); color: var(--color-warning);">
+                <span>⏳</span>
+                <span>يشمل أرباعاً مرحّلة من الأمس لإتمامها</span>
+              </div>
+            ` : ''}
+
+            <!-- Primary CTA: Open Full-Screen Review Page -->
+            <button
+              onclick="openReviewSession()"
+              class="w-full py-3.5 px-5 rounded-2xl ds-btn-primary font-bold text-sm flex items-center justify-center gap-2 shadow-sm"
+            >
+              <span>${summary.doneToday === 0 ? 'ابدأ المراجعة الآن' : summary.todayPct === 100 ? 'استعراض ورد اليوم وإضافة المزيد' : 'متابعة المراجعة الآن'}</span>
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+          </div>
+
+          <!-- 2. HEMMA EVALUATION & YESTERDAY ENCOURAGEMENT -->
+          <div class="ds-surface rounded-3xl p-5">
+            <div class="flex items-center justify-between mb-3">
+              <h3 class="text-base font-bold ds-text-primary">مؤشر الهمة اليومي</h3>
+              <span class="text-xs font-bold px-2.5 py-1 rounded-xl tabular-nums" style="background-color: ${summary.todayPct === 100 ? 'var(--bg-success-soft)' : 'var(--color-primary-soft)'}; color: ${summary.todayPct === 100 ? 'var(--color-success)' : 'var(--color-primary)'};">
+                ${summary.todayPct === 100 ? 'همة عالية 🔥' : summary.todayPct >= 50 ? 'همة طيبة ✨' : `${summary.todayPct}% منجز`}
+              </span>
+            </div>
+
+            <div class="p-3.5 rounded-2xl border" style="${yestStyle}">
+              <p class="text-xs font-bold mb-1">${yest.title}</p>
+              <p class="text-xs opacity-90 leading-relaxed">${yest.message}</p>
+            </div>
+          </div>
+
+          <!-- 3. KPI CARDS GRID -->
+          <div class="grid grid-cols-3 gap-2.5 tabular-nums">
+            <div class="ds-surface rounded-2xl p-3.5 text-center">
+              <span class="text-[11px] font-medium ds-text-secondary block mb-1">إجمالي المحفوظ</span>
+              <span class="text-2xl font-bold ds-text-primary">${totalSaved}</span>
+              <span class="text-[10px] ds-text-secondary block mt-0.5">ربعاً</span>
+            </div>
+
+            <div class="ds-surface rounded-2xl p-3.5 text-center">
+              <span class="text-[11px] font-medium ds-text-secondary block mb-1">ختمة المراجعة</span>
+              <span class="text-2xl font-bold" style="color: var(--color-primary);">${khatmahPct}%</span>
+              <span class="text-[10px] ds-text-secondary block mt-0.5">${state.completedCycles} ختمة تامة</span>
+            </div>
+
+            <div class="ds-surface rounded-2xl p-3.5 text-center">
+              <span class="text-[11px] font-medium ds-text-secondary block mb-1">أيام الالتزام</span>
+              <span class="text-2xl font-bold" style="color: var(--color-success);">${streak}</span>
+              <span class="text-[10px] ds-text-secondary block mt-0.5">يوم متتالي</span>
+            </div>
+          </div>
+
+          <!-- 4. 7-DAY ACTIVITY CHART -->
+          <div class="ds-surface rounded-3xl p-5">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="text-sm font-bold ds-text-primary">نشاط المراجعة خلال 7 أيام</h3>
+              <span class="text-[11px] ds-text-secondary">نسبة الإنجاز</span>
+            </div>
+
+            <div class="grid grid-cols-7 gap-2 items-end h-28 pt-3 px-1 tabular-nums">
+              ${chartDays.map(d => {
+                const barColor = d.pct === 100
+                  ? 'var(--color-success)'
+                  : d.pct > 0
+                  ? 'var(--color-primary)'
+                  : 'var(--bg-surface-alt)';
+                const barHeight = d.pct > 0 ? Math.max(16, d.pct) : 10;
+                return `
+                  <div class="flex flex-col items-center justify-end h-full gap-1.5">
+                    <span class="text-[10px] font-bold ds-text-secondary">${d.pct > 0 ? d.pct + '%' : '-'}</span>
+                    <div class="w-full rounded-t-lg transition-all duration-500" style="height: ${barHeight}%; background-color: ${barColor};"></div>
+                    <span class="text-[10px] font-semibold ds-text-secondary truncate w-full text-center">${d.label}</span>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          </div>
+
+        </div>
+      `;
+    }
+
+    /* ---------------- FULL-SCREEN REVIEW SESSION PAGE ---------------- */
+    function renderReviewFullScreen() {
+      const summary = getTodaySummaryData();
+      const subtitleEl = document.getElementById('reviewSessionSubtitle');
+      if (subtitleEl) {
+        subtitleEl.textContent = `تم إنجاز ${summary.doneToday} من ${summary.totalToday} (${summary.todayPct}%)`;
+      }
+
+      const bodyEl = document.getElementById('reviewFullScreenBody');
+      if (!bodyEl) return;
+
+      bodyEl.innerHTML = `
+        <!-- Top Progress Card inside Review Session -->
+        <div class="ds-surface rounded-3xl p-4">
+          <div class="flex items-center justify-between text-xs font-bold mb-2 tabular-nums">
+            <span class="ds-text-secondary">التقدم الكلي في جلسة اليوم</span>
+            <span style="color: ${summary.todayPct === 100 ? 'var(--color-success)' : 'var(--color-primary)'};">
+              ${summary.doneToday} / ${summary.totalToday} (${summary.todayPct}%)
+            </span>
+          </div>
+          <div class="w-full h-2.5 rounded-full overflow-hidden" style="background-color: var(--bg-surface-alt);">
+            <div class="h-full rounded-full transition-all duration-500" style="width: ${summary.todayPct}%; background-color: ${summary.todayPct === 100 ? 'var(--color-success)' : 'var(--color-primary)'};"></div>
+          </div>
+        </div>
+
+        <!-- SECTION 1: الماضي القريب -->
+        <section class="space-y-2.5">
+          <div class="flex items-center justify-between px-1">
+            <div class="flex items-center gap-2">
+              <span class="w-2 h-5 rounded-full" style="background-color: var(--color-info);"></span>
+              <div>
+                <h3 class="text-sm font-bold ds-text-primary">الماضي القريب (تسميع يومي)</h3>
+                <p class="text-[11px] ds-text-secondary">آخر ${summary.nearItems.length} أرباع تم حفظها لتثبيتها يومياً</p>
+              </div>
+            </div>
+            <span class="text-xs font-bold px-2.5 py-1 rounded-lg tabular-nums" style="background-color: var(--bg-info-soft); color: var(--color-info);">
+              ${summary.nearDoneCount}/${summary.nearItems.length}
+            </span>
+          </div>
+
+          <div class="space-y-2">
+            ${summary.nearItems.map(item => {
+              const isDone = state.todaySession.nearDoneIds.includes(item.id);
+              return `
+                <div class="rounded-2xl p-3.5 transition-all ${isDone ? 'ds-card-completed border' : 'ds-surface'}">
+                  <div class="flex items-center justify-between gap-3">
+                    <div class="min-w-0 flex-1">
+                      <div class="flex items-center gap-2 mb-1">
+                        <span class="text-[11px] font-bold px-2 py-0.5 rounded-md" style="background-color: var(--bg-surface-alt); color: var(--text-secondary);">
+                          سورة ${item.surahName}
+                        </span>
+                        <span class="text-[10px] font-semibold ds-text-secondary tabular-nums">ربع ${item.mushafRubNum}</span>
+                      </div>
+                      <p class="font-quran text-base ds-text-primary ${isDone ? 'opacity-80' : ''}">
+                        ${item.title}
+                      </p>
+                    </div>
+
+                    <button
+                      onclick="toggleNearTaskDone('${item.id}')"
+                      class="shrink-0 px-3 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5"
+                      style="${isDone
+                        ? 'background-color: var(--color-success); color: #FFFFFF;'
+                        : 'background-color: var(--bg-info-soft); color: var(--color-info);'}"
+                    >
+                      ${isDone ? `
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
+                        <span>تم التسميع</span>
+                      ` : `
+                        <span>تسميع</span>
+                      `}
+                    </button>
+                  </div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        </section>
+
+        <!-- SECTION 2: الماضي البعيد -->
+        <section class="space-y-2.5 pt-1">
+          <div class="flex items-center justify-between px-1">
+            <div class="flex items-center gap-2">
+              <span class="w-2 h-5 rounded-full" style="background-color: var(--color-primary);"></span>
+              <div>
+                <h3 class="text-sm font-bold ds-text-primary">الماضي البعيد (الورد الدوري)</h3>
+                <p class="text-[11px] ds-text-secondary">مراجعة مرتبة بترتيب المصحف الشريف</p>
+              </div>
+            </div>
+            <span class="text-xs font-bold px-2.5 py-1 rounded-lg tabular-nums" style="background-color: var(--color-primary-soft); color: var(--color-primary);">
+              ${summary.farDoneCount}/${summary.farTasks.length}
+            </span>
+          </div>
+
+          <div class="space-y-2.5">
+            ${summary.farTasks.map((task, idx) => {
+              const item = state.items.find(it => it.id === task.itemId);
+              if (!item) return '';
+              const isDone = task.done;
+              return `
+                <div class="rounded-2xl p-4 transition-all ${isDone ? 'ds-card-completed border' : 'ds-surface'}">
+                  <div class="flex items-start justify-between gap-3">
+                    <div class="min-w-0 flex-1">
+                      <div class="flex flex-wrap items-center gap-1.5 mb-1.5">
+                        <span class="inline-flex items-center justify-center w-6 h-6 rounded-lg text-xs font-bold tabular-nums" style="background-color: var(--color-primary-soft); color: var(--color-primary);">
+                          ${idx + 1}
+                        </span>
+                        <span class="text-xs font-bold px-2.5 py-0.5 rounded-lg" style="background-color: var(--bg-surface-alt); color: var(--text-primary);">
+                          سورة ${item.surahName}
+                        </span>
+                        ${task.carriedOver ? `<span class="text-[10px] font-bold px-2 py-0.5 rounded-md" style="background-color: var(--bg-warning-soft); color: var(--color-warning);">مرحّل من الأمس</span>` : ''}
+                        ${task.isExtra ? `<span class="text-[10px] font-bold px-2 py-0.5 rounded-md" style="background-color: var(--bg-info-soft); color: var(--color-info);">إضافي ✨</span>` : ''}
+                      </div>
+                      <p class="font-quran text-lg ds-text-primary">
+                        ${item.title}
+                      </p>
+                    </div>
+
+                    <button
+                      onclick="toggleFarTaskDone('${item.id}')"
+                      class="shrink-0 mt-1 px-3.5 py-2.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5"
+                      style="${isDone
+                        ? 'background-color: var(--color-success); color: #FFFFFF;'
+                        : 'background-color: var(--color-primary); color: #FFFFFF;'}"
+                    >
+                      ${isDone ? `
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
+                        <span>تمت المراجعة</span>
+                      ` : `
+                        <span>تمت المراجعة</span>
+                      `}
+                    </button>
+                  </div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+
+          <!-- Pull one extra Rub' from library into today's session -->
+          <button
+            onclick="addExtraRubToToday()"
+            class="w-full py-3.5 px-4 rounded-2xl ds-btn-soft font-bold text-xs flex items-center justify-center gap-2 border ds-border mt-2"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+            </svg>
+            <span>+ إضافة ربع إضافي من المحفوظات لورد اليوم</span>
+          </button>
+
+          <!-- Finish & Return to Home Button -->
+          <button
+            onclick="closeReviewSession()"
+            class="w-full py-3.5 px-4 rounded-2xl ds-surface ds-text-primary font-bold text-xs flex items-center justify-center gap-2 mt-2"
+          >
+            <span>العودة للرئيسية</span>
+          </button>
+        </section>
+      `;
+    }
+
+    /* ---------------- ADD HIFZ MODAL (FLOATING ACTION BUTTON) ---------------- */
+    function renderAddModalBody() {
+      const container = document.getElementById('addModalContent');
+      if (!container) return;
+
+      const surahOptions = QURAN_DATA.map(s =>
+        `<option value="${s.id}">${s.id}. سورة ${s.name} (${s.rubList.length} ${s.rubList.length === 1 ? 'وحدة' : 'أرباع'})</option>`
+      ).join('');
+
+      container.innerHTML = `
+        <!-- Mode Switcher Pills -->
+        <div class="grid grid-cols-3 gap-1.5 p-1 rounded-2xl ds-surface-alt">
+          <button onclick="setAddMode('full')" class="py-2 px-2 rounded-xl text-xs font-bold transition" style="${addMode === 'full' ? 'background-color: var(--bg-surface); color: var(--color-primary); box-shadow: var(--shadow-card);' : 'color: var(--text-secondary);'}">
+            سورة كاملة
+          </button>
+          <button onclick="setAddMode('upto')" class="py-2 px-2 rounded-xl text-xs font-bold transition" style="${addMode === 'upto' ? 'background-color: var(--bg-surface); color: var(--color-primary); box-shadow: var(--shadow-card);' : 'color: var(--text-secondary);'}">
+            حتى ربع محدد
+          </button>
+          <button onclick="setAddMode('single')" class="py-2 px-2 rounded-xl text-xs font-bold transition" style="${addMode === 'single' ? 'background-color: var(--bg-surface); color: var(--color-primary); box-shadow: var(--shadow-card);' : 'color: var(--text-secondary);'}">
+            ربع فردي/مخصص
+          </button>
+        </div>
+
+        <!-- Surah Selector -->
+        <div>
+          <label class="block text-xs font-bold ds-text-primary mb-1.5">اختر السورة</label>
+          <select id="addSurahSelect" class="w-full p-3 rounded-2xl ds-surface-alt ds-text-primary text-sm font-bold focus:outline-none">
+            ${surahOptions}
+          </select>
+        </div>
+
+        <!-- Dynamic Area -->
+        <div id="addModeDynamicFields" class="space-y-4"></div>
+
+        <div class="rounded-2xl p-3 text-[11px] leading-relaxed border" style="background-color: var(--color-primary-soft); color: var(--text-primary); border-color: var(--border-subtle);">
+          💡 <strong>لإضافة محفوظك القديم:</strong> اختر سورة البقرة أو آل عمران من <strong>"سورة كاملة"</strong>، وللسور التي لم تكملها مثل النساء اختر <strong>"حتى ربع محدد"</strong>.
+        </div>
+      `;
+
+      const surahSelect = document.getElementById('addSurahSelect');
+      const dynamicContainer = document.getElementById('addModeDynamicFields');
+
+      if (state.items.length === 0) {
+        surahSelect.value = '2';
+      }
+
+      const updateDynamicFields = () => {
+        const surahId = Number(surahSelect.value);
+        const surah = QURAN_DATA.find(s => s.id === surahId);
+        if (!surah) return;
+
+        if (addMode === 'full') {
+          dynamicContainer.innerHTML = `
+            <div class="p-3.5 rounded-2xl ds-surface-alt text-xs ds-text-secondary">
+              سيتم إضافة جميع أرباع <strong>سورة ${surah.name}</strong> وعددها <strong style="color: var(--color-primary);">${surah.rubList.length}</strong> بترتيب المصحف.
+            </div>
+            <button onclick="addFullSurah(${surah.id})" class="w-full py-3.5 rounded-2xl ds-btn-primary font-bold text-sm">
+              إضافة سورة ${surah.name} كاملة ✓
+            </button>
+          `;
+        } else if (addMode === 'upto') {
+          const rubOptions = surah.rubList.map((r, idx) =>
+            `<option value="${idx + 1}">${r}</option>`
+          ).join('');
+
+          dynamicContainer.innerHTML = `
+            <div>
+              <label class="block text-xs font-bold ds-text-primary mb-1.5">حفظت من بداية السورة حتى نهاية:</label>
+              <select id="uptoRubSelect" class="w-full p-3 rounded-2xl ds-surface-alt ds-text-primary text-xs font-semibold focus:outline-none">
+                ${rubOptions}
+              </select>
+            </div>
+            <button onclick="addUpToRub(${surah.id}, Number(document.getElementById('uptoRubSelect').value))" class="w-full py-3.5 rounded-2xl ds-btn-primary font-bold text-sm">
+              إضافة الأرباع المحددة ✓
+            </button>
+          `;
+        } else if (addMode === 'single') {
+          const rubOptions = surah.rubList.map((r, idx) =>
+            `<option value="${idx + 1}">${r}</option>`
+          ).join('');
+
+          dynamicContainer.innerHTML = `
+            <div>
+              <label class="block text-xs font-bold ds-text-primary mb-1.5">اختر الربع من السورة</label>
+              <select id="singleRubSelect" class="w-full p-3 rounded-2xl ds-surface-alt ds-text-primary text-xs font-semibold focus:outline-none">
+                ${rubOptions}
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-bold ds-text-primary mb-1.5">اسم مخصص للربع (اختياري)</label>
+              <input id="customRubTitleInput" type="text" placeholder="اتركه فارغاً لاستخدام بداية الربع التلقائية" class="w-full p-3 rounded-2xl ds-surface-alt ds-text-primary text-xs focus:outline-none" />
+            </div>
+            <button onclick="addSingleOrCustomRub(${surah.id}, document.getElementById('singleRubSelect').value, document.getElementById('customRubTitleInput').value)" class="w-full py-3.5 rounded-2xl ds-btn-primary font-bold text-sm">
+              إضافة الربع للقائمة ✓
+            </button>
+          `;
+        }
+      };
+
+      surahSelect.addEventListener('change', updateDynamicFields);
+      updateDynamicFields();
+    }
+
+    function setAddMode(mode) {
+      addMode = mode;
+      renderAddModalBody();
+    }
+
+    /* ---------------- TAB 2: LIBRARY ---------------- */
+    function renderLibraryView() {
+      if (state.items.length === 0) {
+        return `
+          <div class="ds-surface rounded-3xl p-7 text-center mt-2 animate-fade-in">
+            <p class="text-sm ds-text-secondary mb-4">لا توجد أرباع محفوظة في سجلك بعد.</p>
+            <div class="space-y-2.5">
+              <button onclick="openAddModal()" class="w-full py-3 px-5 rounded-2xl ds-btn-primary text-xs font-bold">
+                + إضافة محفوظات الآن
+              </button>
+              <button onclick="loadSampleDemoData()" class="w-full py-3 px-5 rounded-2xl ds-btn-soft text-xs font-bold">
+                ✨ تجربة سريعة (تحميل بيانات تجريبية)
+              </button>
+            </div>
+          </div>
+        `;
+      }
+
+      const nextPointerId = state.items[state.pointerIndex]?.id;
+      const groups = [];
+      state.items.forEach(item => {
+        let group = groups.find(g => g.surahId === item.surahId);
+        if (!group) {
+          group = { surahId: item.surahId, surahName: item.surahName, items: [] };
+          groups.push(group);
+        }
+        group.items.push(item);
+      });
+
+      const filteredGroups = librarySearch.trim()
+        ? groups.filter(g => g.surahName.includes(librarySearch.trim()))
+        : groups;
+
+      return `
+        <div class="space-y-3 animate-fade-in">
+          <div class="ds-surface rounded-2xl p-3 flex items-center gap-2">
+            <svg class="w-4 h-4 ds-text-secondary shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <input
+              type="text"
+              value="${librarySearch}"
+              oninput="librarySearch = this.value; renderApp();"
+              placeholder="ابحث باسم السورة..."
+              class="w-full bg-transparent text-xs font-semibold focus:outline-none ds-text-primary"
+            />
+            <span class="shrink-0 text-[11px] font-bold px-2.5 py-1 rounded-lg tabular-nums" style="background-color: var(--color-primary-soft); color: var(--color-primary);">
+              ${state.items.length} ربع
+            </span>
+          </div>
+
+          <p class="text-[11px] ds-text-secondary px-1">
+            اضغط على <strong>"ابدأ من هنا"</strong> بجانب أي ربع لتجعل ورد المراجعة القادم يبدأ من عنده.
+          </p>
+
+          ${filteredGroups.map(group => `
+            <div class="ds-surface rounded-2xl overflow-hidden">
+              <div class="px-4 py-3 ds-surface-alt border-b ds-border flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <span class="w-7 h-7 rounded-lg text-white text-xs font-bold flex items-center justify-center tabular-nums" style="background-color: var(--color-primary);">
+                    ${group.surahId}
+                  </span>
+                  <h3 class="text-sm font-bold ds-text-primary">سورة ${group.surahName}</h3>
+                  <span class="text-[11px] ds-text-secondary tabular-nums">(${group.items.length})</span>
+                </div>
+                <button onclick="deleteSurahGroup(${group.surahId}, '${group.surahName}')" class="text-[11px] font-semibold hover:underline" style="color: var(--color-error);">
+                  حذف السورة
+                </button>
+              </div>
+
+              <div class="divide-y ds-border">
+                ${group.items.map(item => {
+                  const isNext = item.id === nextPointerId;
+                  return `
+                    <div class="p-3.5 flex items-center justify-between gap-2" style="${isNext ? 'background-color: var(--color-primary-soft);' : ''}">
+                      <div class="min-w-0 flex-1">
+                        ${isNext ? `<span class="inline-block text-[10px] font-bold px-2 py-0.5 rounded-md mb-1" style="background-color: var(--color-primary); color: #FFF;">📍 الدور القادم في الطابور</span>` : ''}
+                        <p class="font-quran text-base ds-text-primary">
+                          ${item.title}
+                        </p>
+                      </div>
+
+                      <div class="flex items-center gap-1.5 shrink-0">
+                        ${!isNext ? `
+                          <button onclick="setPointerToItem('${item.id}')" class="px-2.5 py-1.5 rounded-lg ds-btn-soft text-[11px] font-bold">
+                            ابدأ من هنا
+                          </button>
+                        ` : ''}
+                        <button onclick="deleteRubItem('${item.id}')" title="حذف الربع" class="p-1.5 rounded-lg ds-text-secondary hover:opacity-80">
+                          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                  `;
+                }).join('')}
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    }
+
+    /* ---------------- TAB 3: SETTINGS ---------------- */
+    function renderSettingsView() {
+      return `
+        <div class="space-y-4 animate-fade-in">
+          <!-- Daily Near & Far Limits -->
+          <div class="ds-surface rounded-3xl p-5 space-y-4">
+            <h3 class="text-sm font-bold ds-text-primary">تخصيص الورد اليومي</h3>
+
+            <div>
+              <div class="flex items-center justify-between mb-1.5">
+                <span class="text-xs font-bold ds-text-primary">أرباع الماضي القريب (تسميع يومي)</span>
+                <span class="text-[11px] ds-text-secondary">الافتراضي: 4</span>
+              </div>
+              <div class="flex items-center justify-between ds-surface-alt p-2.5 rounded-2xl tabular-nums">
+                <button onclick="updateDailyNearLimit(-1)" class="w-9 h-9 rounded-xl ds-surface font-bold text-lg ds-text-primary active:scale-90 transition">-</button>
+                <div class="text-center">
+                  <span class="text-xl font-bold ds-text-primary">${state.dailyNearLimit || 4}</span>
+                  <span class="text-[11px] ds-text-secondary mr-1">أرباع</span>
+                </div>
+                <button onclick="updateDailyNearLimit(1)" class="w-9 h-9 rounded-xl ds-surface font-bold text-lg ds-text-primary active:scale-90 transition">+</button>
+              </div>
+            </div>
+
+            <div>
+              <div class="flex items-center justify-between mb-1.5">
+                <span class="text-xs font-bold ds-text-primary">أرباع الماضي البعيد (الورد الدوري)</span>
+                <span class="text-[11px] ds-text-secondary">الافتراضي: 5</span>
+              </div>
+              <div class="flex items-center justify-between ds-surface-alt p-2.5 rounded-2xl tabular-nums">
+                <button onclick="updateDailyFarLimit(-1)" class="w-9 h-9 rounded-xl ds-surface font-bold text-lg ds-text-primary active:scale-90 transition">-</button>
+                <div class="text-center">
+                  <span class="text-xl font-bold ds-text-primary">${state.dailyFarLimit}</span>
+                  <span class="text-[11px] ds-text-secondary mr-1">أرباع</span>
+                </div>
+                <button onclick="updateDailyFarLimit(1)" class="w-9 h-9 rounded-xl ds-surface font-bold text-lg ds-text-primary active:scale-90 transition">+</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Share & Install -->
+          <div class="ds-surface rounded-3xl p-5 space-y-3">
+            <h3 class="text-sm font-bold ds-text-primary">المشاركة والتثبيت على الهاتف (PWA)</h3>
+
+            <button onclick="downloadAppHtmlFile()" class="w-full py-3 px-4 rounded-2xl ds-btn-soft text-xs font-bold flex items-center justify-between border ds-border">
+              <span>1. تنزيل ملف التطبيق (index.html)</span>
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              </svg>
+            </button>
+
+            <div class="grid grid-cols-2 gap-2.5">
+              <button onclick="downloadManifestFile()" class="py-2.5 px-3 rounded-2xl ds-surface-alt ds-text-primary text-xs font-bold flex items-center justify-center gap-1.5">
+                <span>2. تنزيل manifest.json</span>
+              </button>
+              <button onclick="downloadServiceWorkerFile()" class="py-2.5 px-3 rounded-2xl ds-surface-alt ds-text-primary text-xs font-bold flex items-center justify-center gap-1.5">
+                <span>3. تنزيل sw.js</span>
+              </button>
+            </div>
+
+            <button onclick="shareTodayAchievement()" class="w-full py-3 px-4 rounded-2xl ds-btn-primary text-xs font-bold flex items-center justify-between">
+              <span>مشاركة تقرير إنجاز اليوم (واتساب / تيليجرام)</span>
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+              </svg>
+            </button>
+
+            <div class="p-3 rounded-2xl text-[11px] leading-relaxed border" style="background-color: var(--bg-warning-soft); color: var(--color-warning); border-color: var(--border-subtle);">
+              📱 <strong>لتثبيت التطبيق على شاشة هاتفك:</strong><br/>
+              افتح الرابط من متصفح الهاتف (Chrome أو Safari)، ثم اضغط على قائمة المتصفح واختر <strong>"الإضافة إلى الشاشة الرئيسية" (Add to Home Screen)</strong>.
+            </div>
+          </div>
+
+          <!-- Backup & Restore -->
+          <div class="ds-surface rounded-3xl p-5 space-y-3">
+            <h3 class="text-sm font-bold ds-text-primary">النسخ الاحتياطي ونقل البيانات</h3>
+            <div class="grid grid-cols-2 gap-2.5">
+              <button onclick="exportBackupData()" class="py-3 px-3 rounded-2xl ds-surface-alt ds-text-primary text-xs font-bold">
+                📤 تصدير نسخة
+              </button>
+              <button onclick="openImportBackupModal()" class="py-3 px-3 rounded-2xl ds-surface-alt ds-text-primary text-xs font-bold">
+                📥 استعادة نسخة
+              </button>
+            </div>
+          </div>
+
+          <!-- Reset Zone -->
+          <div class="ds-surface rounded-3xl p-5 space-y-2.5">
+            <h3 class="text-xs font-bold" style="color: var(--color-error);">إدارة الدورة والبيانات</h3>
+            <button onclick="confirmResetCycle()" class="w-full py-2.5 px-4 rounded-xl ds-surface-alt ds-text-primary text-xs font-bold text-right">
+              إعادة المراجعة من أول سورة في محفوظاتك
+            </button>
+            <button onclick="confirmClearAllData()" class="w-full py-2.5 px-4 rounded-xl text-xs font-bold text-right text-white" style="background-color: var(--color-error);">
+              مسح جميع المحفوظات والبدء من الصفر
+            </button>
+          </div>
+        </div>
+      `;
+    }
+
+    function updateDailyNearLimit(delta) {
+      const current = state.dailyNearLimit || 4;
+      const next = current + delta;
+      if (next < 1 || next > 15) return;
+      state.dailyNearLimit = next;
+      saveState();
+      renderApp();
+    }
+
+    function updateDailyFarLimit(delta) {
+      const next = state.dailyFarLimit + delta;
+      if (next < 1 || next > 30) return;
+      state.dailyFarLimit = next;
+      saveState();
+      renderApp();
+    }
+
+    function downloadAppHtmlFile() {
+      try {
+        const htmlContent = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+        const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'index.html';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        showToast('تم بدء تنزيل ملف index.html على جهازك ✓', 'success');
+      } catch (e) {
+        showToast('يمكنك نسخ الكود من محرر الكود وحفظه باسم index.html', 'warning');
+      }
+    }
+
+    function downloadManifestFile() {
+      const manifestObj = {
+        name: "مُراجِع القرآن - وردك اليومي",
+        short_name: "مُراجِع القرآن",
+        description: "تطبيق متابعة ومراجعة محفوظ القرآن الكريم يومياً",
+        start_url: "./index.html",
+        display: "standalone",
+        background_color: "#FAF7F2",
+        theme_color: "#D97742",
+        dir: "rtl",
+        lang: "ar",
+        icons: [
+          { src: "icon-192.png", sizes: "192x192", type: "image/png" },
+          { src: "icon-512.png", sizes: "512x512", type: "image/png" }
+        ]
+      };
+      const blob = new Blob([JSON.stringify(manifestObj, null, 2)], { type: 'application/json;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'manifest.json';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast('تم تنزيل ملف manifest.json بنجاح ✓', 'success');
+    }
+
+    function downloadServiceWorkerFile() {
+      const swCode = `const CACHE_NAME = 'quran-reviewer-v1';
+const ASSETS = ['./', './index.html', './manifest.json'];
+
+self.addEventListener('install', (e) => {
+  e.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS)));
+});
+
+self.addEventListener('fetch', (e) => {
+  e.respondWith(
+    caches.match(e.request).then((res) => res || fetch(e.request))
+  );
+});`;
+      const blob = new Blob([swCode], { type: 'application/javascript;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'sw.js';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast('تم تنزيل ملف sw.js بنجاح ✓', 'success');
+    }
+
+    function confirmResetCycle() {
+      openModal({
+        title: 'إعادة دورة المراجعة من البداية',
+        bodyHtml: 'سيتم إعادة مؤشر المراجعة إلى أول ربع في قائمة محفوظاتك وتحديث ورد اليوم.',
+        buttons: [
+          { label: 'إلغاء', className: 'px-4 py-2 rounded-xl text-xs font-bold ds-surface-alt ds-text-primary' },
+          {
+            label: 'نعم، أعد الضبط',
+            className: 'px-4 py-2 rounded-xl text-xs font-bold ds-btn-primary',
+            onClick: () => {
+              state.pointerIndex = 0;
+              state.cycleReviewedCount = 0;
+              state.todaySession.farTasks = [];
+              populateFarTasksForToday([]);
+              saveState();
+              showToast('تمت إعادة المراجعة من البداية ✓', 'success');
+              switchTab('home');
+            }
+          }
+        ]
+      });
+    }
+
+    function confirmClearAllData() {
+      openModal({
+        title: 'مسح جميع البيانات',
+        bodyHtml: 'سيتم حذف جميع السور والأرباع المسجلة وسجل الأيام نهائياً. هل أنت متأكد؟',
+        buttons: [
+          { label: 'إلغاء', className: 'px-4 py-2 rounded-xl text-xs font-bold ds-surface-alt ds-text-primary' },
+          {
+            label: 'نعم، امسح الكل',
+            className: 'px-4 py-2 rounded-xl text-xs font-bold text-white',
+            style: 'background-color: var(--color-error);',
+            onClick: () => {
+              const keepDark = state.darkMode;
+              state = JSON.parse(JSON.stringify(defaultState));
+              state.darkMode = keepDark;
+              saveState();
+              showToast('تم مسح جميع البيانات');
+              switchTab('home');
+            }
+          }
+        ]
+      });
+    }
+
+    /**
+     * =========================================================================
+     * 10. INITIALIZATION
+     * =========================================================================
+     */
+    window.addEventListener('DOMContentLoaded', () => {
+      applyTheme();
+      syncDailySession();
+      updateBadges();
+      initBottomSheetGestures();
+      switchTab('home');
+    });
+
+    // Register Service Worker for Offline PWA Support
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js').catch(() => {});
+      });
+    }
+  </script>
+
+</body></html>
