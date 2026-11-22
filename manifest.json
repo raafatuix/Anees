@@ -1,11 +1,11 @@
 {
-  "name": "مُتعاهِد - رفيق مراجعة القرآن",
-  "short_name": "مُتعاهِد",
-  "description": "تطبيق متابعة ومراجعة محفوظ القرآن الكريم يومياً",
+  "name": "آنيس - أُنسُك اليومي بالقرآن",
+  "short_name": "آنيس",
+  "description": "تطبيق ذكي لتنظيم الحفظ والمراجعة اليومية للقرآن الكريم",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#FAF7F2",
-  "theme_color": "#D97742",
+  "background_color": "#F1EFEA",
+  "theme_color": "#F1EFEA",
   "dir": "rtl",
   "lang": "ar",
   "icons": [
