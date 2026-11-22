@@ -1,5 +1,14 @@
-const CACHE_NAME = 'anees-quran-v1';
-const ASSETS = ['./', './index.html', './manifest.json'];
+const CACHE_NAME = 'anees-quran-v2';
+const ASSETS = [
+  './',
+  './index.html',
+  './manifest.json',
+  './fonts/thmanyahserifdisplay-Light.otf',
+  './fonts/thmanyahserifdisplay-Regular.otf',
+  './fonts/thmanyahserifdisplay-Medium.otf',
+  './fonts/thmanyahserifdisplay-Bold.otf',
+  './fonts/thmanyahserifdisplay-Black.otf'
+];
 
 self.addEventListener('install', (e) => {
   self.skipWaiting();
