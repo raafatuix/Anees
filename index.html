@@ -486,8 +486,8 @@
     <!-- =======================================================================
          4. FULL-SCREEN DAILY REVIEW VIEW (الورد اليومي)
          ======================================================================= -->
-    <div id="reviewFullScreen" class="fixed inset-0 z-50 hidden flex-col ds-canvas overflow-y-auto">
-      <div class="max-w-lg mx-auto w-full min-h-screen flex flex-col" style="padding-bottom: calc(108px + env(safe-area-inset-bottom, 0px));">
+    <div id="reviewFullScreen" class="fixed inset-0 z-50 hidden flex-col ds-canvas overflow-y-auto" style="-webkit-overflow-scrolling: touch;">
+      <div class="max-w-lg mx-auto w-full flex flex-col">
         <!-- Top Header -->
         <div class="sticky top-0 z-20 px-4 pt-5 pb-3 backdrop-blur-md flex items-center justify-between" style="background-color: color-mix(in srgb, var(--bg-canvas) 92%, transparent);">
           <button onclick="closeReviewSession()" aria-label="رجوع" class="w-11 h-11 rounded-full ds-pill-soft flex items-center justify-center ds-text-primary active:scale-95 transition">
@@ -499,7 +499,7 @@
           <div class="w-11"></div>
         </div>
 
-        <div id="reviewFullScreenBody" class="flex-1 px-4 pt-2 space-y-5"></div>
+        <div id="reviewFullScreenBody" class="px-4 pt-2 space-y-5" style="padding-bottom: calc(120px + env(safe-area-inset-bottom, 0px));"></div>
       </div>
 
       <!-- Sticky Bottom Action Button -->
@@ -2572,6 +2572,7 @@
             }).join('')}
           </div>
         </section>
+        <div aria-hidden="true" style="height: 24px; flex-shrink: 0;"></div>
       `;
     }
 

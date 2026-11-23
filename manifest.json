@@ -1,9 +1,10 @@
 {
-  "name": "آنيس - أُنسُك اليومي بالقرآن",
+  "name": "آنيس | أُنسُك اليومي بالقرآن",
   "short_name": "آنيس",
-  "description": "تطبيق ذكي لتنظيم الحفظ والمراجعة اليومية للقرآن الكريم",
+  "description": "آنيس — رفيقك الذكي لتنظيم الحفظ والمراجعة اليومية للقرآن الكريم",
   "start_url": "./index.html",
   "display": "standalone",
+  "orientation": "portrait",
   "background_color": "#F1EFEA",
   "theme_color": "#F1EFEA",
   "dir": "rtl",
