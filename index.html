@@ -1616,12 +1616,12 @@
                   <span class="text-xs ds-text-secondary">آخر ما حفظته، لتثبيته يومياً</span>
                 </div>
                 <div class="flex items-center justify-between px-3 py-2 rounded-full tabular-nums" style="background-color: var(--bg-canvas);">
-                  <button type="button" onclick="adjustObWird('near', 1)" class="w-11 h-11 rounded-full ds-surface flex items-center justify-center text-xl font-medium ds-text-primary active:scale-90 transition">+</button>
+                  <button type="button" onclick="adjustObWird('near', 1)" aria-label="زيادة" class="w-11 h-11 rounded-full ds-surface flex items-center justify-center ds-text-primary active:scale-90 transition"><svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
                   <div class="text-center">
                     <span id="obNearCountText" class="text-xl font-bold ds-text-primary">${obCustomNear}</span>
                     <span id="obNearUnitText" class="text-[16px] ds-text-secondary mr-1">${obCustomNear === 1 ? 'ربع' : 'أرباع'}</span>
                   </div>
-                  <button type="button" onclick="adjustObWird('near', -1)" class="w-11 h-11 rounded-full ds-surface flex items-center justify-center text-xl font-medium ds-text-primary active:scale-90 transition">−</button>
+                  <button id="obNearDecBtn" type="button" onclick="adjustObWird('near', -1)" aria-label="تقليل" class="w-11 h-11 rounded-full ds-surface flex items-center justify-center ds-text-primary active:scale-90 transition-all duration-200 ${obCustomNear <= 1 ? 'opacity-60' : ''}"><svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14"/></svg></button>
                 </div>
               </div>
 
@@ -1631,12 +1631,12 @@
                   <span class="text-xs ds-text-secondary">ورد دوري بترتيب المصحف</span>
                 </div>
                 <div class="flex items-center justify-between px-3 py-2 rounded-full tabular-nums" style="background-color: var(--bg-canvas);">
-                  <button type="button" onclick="adjustObWird('far', 1)" class="w-11 h-11 rounded-full ds-surface flex items-center justify-center text-xl font-medium ds-text-primary active:scale-90 transition">+</button>
+                  <button type="button" onclick="adjustObWird('far', 1)" aria-label="زيادة" class="w-11 h-11 rounded-full ds-surface flex items-center justify-center ds-text-primary active:scale-90 transition"><svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
                   <div class="text-center">
                     <span id="obFarCountText" class="text-xl font-bold ds-text-primary">${obCustomFar}</span>
                     <span id="obFarUnitText" class="text-[16px] ds-text-secondary mr-1">${obCustomFar === 1 ? 'ربع' : 'أرباع'}</span>
                   </div>
-                  <button type="button" onclick="adjustObWird('far', -1)" class="w-11 h-11 rounded-full ds-surface flex items-center justify-center text-xl font-medium ds-text-primary active:scale-90 transition">−</button>
+                  <button id="obFarDecBtn" type="button" onclick="adjustObWird('far', -1)" aria-label="تقليل" class="w-11 h-11 rounded-full ds-surface flex items-center justify-center ds-text-primary active:scale-90 transition-all duration-200 ${obCustomFar <= 1 ? 'opacity-60' : ''}"><svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14"/></svg></button>
                 </div>
               </div>
             </div>
@@ -1902,17 +1902,21 @@
 
     function adjustObWird(type, delta) {
       if (type === 'near') {
-        obCustomNear = Math.max(0, Math.min(20, obCustomNear + delta));
+        obCustomNear = Math.max(1, Math.min(20, obCustomNear + delta));
         const cEl = document.getElementById('obNearCountText');
         const uEl = document.getElementById('obNearUnitText');
+        const decBtn = document.getElementById('obNearDecBtn');
         if (cEl) cEl.textContent = obCustomNear;
         if (uEl) uEl.textContent = obCustomNear === 1 ? 'ربع' : 'أرباع';
+        if (decBtn) decBtn.classList.toggle('opacity-60', obCustomNear <= 1);
       } else {
-        obCustomFar = Math.max(0, Math.min(30, obCustomFar + delta));
+        obCustomFar = Math.max(1, Math.min(30, obCustomFar + delta));
         const cEl = document.getElementById('obFarCountText');
         const uEl = document.getElementById('obFarUnitText');
+        const decBtn = document.getElementById('obFarDecBtn');
         if (cEl) cEl.textContent = obCustomFar;
         if (uEl) uEl.textContent = obCustomFar === 1 ? 'ربع' : 'أرباع';
+        if (decBtn) decBtn.classList.toggle('opacity-60', obCustomFar <= 1);
       }
       updateObWirdSummaryDOM();
     }
@@ -2834,12 +2838,12 @@
                   <span class="text-xs ds-text-secondary">آخر ما حفظته، لتثبيته يومياً</span>
                 </div>
                 <div class="flex items-center justify-between px-3 py-2 rounded-full tabular-nums" style="background-color: var(--bg-canvas);">
-                  <button type="button" onclick="adjustSettingsWird('near', 1)" class="w-11 h-11 rounded-full ds-surface flex items-center justify-center text-xl font-medium ds-text-primary active:scale-90 transition">+</button>
+                  <button type="button" onclick="adjustSettingsWird('near', 1)" aria-label="زيادة" class="w-11 h-11 rounded-full ds-surface flex items-center justify-center ds-text-primary active:scale-90 transition"><svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
                   <div class="text-center">
                     <span id="settingsNearCount" class="text-xl font-bold ds-text-primary">${Math.max(1, state.dailyNearLimit || 1)}</span>
                     <span id="settingsNearUnit" class="text-[16px] ds-text-secondary mr-1">${Math.max(1, state.dailyNearLimit || 1) === 1 ? 'ربع' : 'أرباع'}</span>
                   </div>
-                  <button type="button" onclick="adjustSettingsWird('near', -1)" class="w-11 h-11 rounded-full ds-surface flex items-center justify-center text-xl font-medium ds-text-primary active:scale-90 transition">−</button>
+                  <button id="settingsNearDecBtn" type="button" onclick="adjustSettingsWird('near', -1)" aria-label="تقليل" class="w-11 h-11 rounded-full ds-surface flex items-center justify-center ds-text-primary active:scale-90 transition-all duration-200 ${Math.max(1, state.dailyNearLimit || 1) <= 1 ? 'opacity-60' : ''}"><svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14"/></svg></button>
                 </div>
                 <p id="settingsNearWarning" class="${settingsLimitWarning === 'near' ? '' : 'hidden'} text-xs font-medium text-right mt-2" style="color: var(--color-error);">
                   لا يمكن تقليل الورد اليومي عن ربع واحد
@@ -2853,12 +2857,12 @@
                   <span class="text-xs ds-text-secondary">ورد دوري بترتيب المصحف</span>
                 </div>
                 <div class="flex items-center justify-between px-3 py-2 rounded-full tabular-nums" style="background-color: var(--bg-canvas);">
-                  <button type="button" onclick="adjustSettingsWird('far', 1)" class="w-11 h-11 rounded-full ds-surface flex items-center justify-center text-xl font-medium ds-text-primary active:scale-90 transition">+</button>
+                  <button type="button" onclick="adjustSettingsWird('far', 1)" aria-label="زيادة" class="w-11 h-11 rounded-full ds-surface flex items-center justify-center ds-text-primary active:scale-90 transition"><svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
                   <div class="text-center">
                     <span id="settingsFarCount" class="text-xl font-bold ds-text-primary">${Math.max(1, state.dailyFarLimit || 1)}</span>
                     <span id="settingsFarUnit" class="text-[16px] ds-text-secondary mr-1">${Math.max(1, state.dailyFarLimit || 1) === 1 ? 'ربع' : 'أرباع'}</span>
                   </div>
-                  <button type="button" onclick="adjustSettingsWird('far', -1)" class="w-11 h-11 rounded-full ds-surface flex items-center justify-center text-xl font-medium ds-text-primary active:scale-90 transition">−</button>
+                  <button id="settingsFarDecBtn" type="button" onclick="adjustSettingsWird('far', -1)" aria-label="تقليل" class="w-11 h-11 rounded-full ds-surface flex items-center justify-center ds-text-primary active:scale-90 transition-all duration-200 ${Math.max(1, state.dailyFarLimit || 1) <= 1 ? 'opacity-60' : ''}"><svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14"/></svg></button>
                 </div>
                 <p id="settingsFarWarning" class="${settingsLimitWarning === 'far' ? '' : 'hidden'} text-xs font-medium text-right mt-2" style="color: var(--color-error);">
                   لا يمكن تقليل الورد اليومي عن ربع واحد
@@ -2965,6 +2969,8 @@
     function adjustSettingsWird(type, delta) {
       const nearWarnEl = document.getElementById('settingsNearWarning');
       const farWarnEl = document.getElementById('settingsFarWarning');
+      const nearDecBtn = document.getElementById('settingsNearDecBtn');
+      const farDecBtn = document.getElementById('settingsFarDecBtn');
 
       if (type === 'near') {
         const currentNear = Math.max(1, state.dailyNearLimit || 1);
@@ -2973,6 +2979,7 @@
           settingsLimitWarning = 'near';
           if (nearWarnEl) nearWarnEl.classList.remove('hidden');
           if (farWarnEl) farWarnEl.classList.add('hidden');
+          if (nearDecBtn) nearDecBtn.classList.add('opacity-60');
           return;
         }
         settingsLimitWarning = '';
@@ -2983,6 +2990,7 @@
         const uEl = document.getElementById('settingsNearUnit');
         if (cEl) cEl.textContent = nextNear;
         if (uEl) uEl.textContent = nextNear === 1 ? 'ربع' : 'أرباع';
+        if (nearDecBtn) nearDecBtn.classList.toggle('opacity-60', nextNear <= 1);
       } else {
         const currentFar = Math.max(1, state.dailyFarLimit || 1);
         const nextFar = currentFar + delta;
@@ -2990,6 +2998,7 @@
           settingsLimitWarning = 'far';
           if (farWarnEl) farWarnEl.classList.remove('hidden');
           if (nearWarnEl) nearWarnEl.classList.add('hidden');
+          if (farDecBtn) farDecBtn.classList.add('opacity-60');
           return;
         }
         settingsLimitWarning = '';
@@ -3000,6 +3009,7 @@
         const uEl = document.getElementById('settingsFarUnit');
         if (cEl) cEl.textContent = nextFar;
         if (uEl) uEl.textContent = nextFar === 1 ? 'ربع' : 'أرباع';
+        if (farDecBtn) farDecBtn.classList.toggle('opacity-60', nextFar <= 1);
       }
 
       saveState();
@@ -3103,15 +3113,23 @@ ${window.location.href}`);
       if (!sheet || !panel) return;
 
       panel.classList.remove('bottom-sheet-enter');
-      panel.classList.add('bottom-sheet-exit');
+      panel.classList.remove('bottom-sheet-exit');
+      // Force reflow so transition runs smoothly from whatever translateY(currentY) it currently has
+      void panel.offsetHeight;
+      panel.style.transition = 'transform 0.24s cubic-bezier(0.32, 0.72, 0, 1)';
+      panel.style.transform = 'translateY(100%)';
+      sheet.style.transition = 'opacity 0.24s ease';
+      sheet.style.opacity = '0';
+
       setTimeout(() => {
         sheet.classList.add('hidden');
         sheet.classList.remove('flex');
-        panel.classList.remove('bottom-sheet-exit');
+        sheet.style.opacity = '';
+        sheet.style.transition = '';
         panel.style.transform = '';
         panel.style.transition = '';
         unlockBackgroundScroll();
-      }, 210);
+      }, 240);
     }
 
     function handleSheetBackdropClick(e) {
@@ -3160,13 +3178,14 @@ ${window.location.href}`);
       panel.addEventListener('touchend', () => {
         if (!isDragging) return;
         isDragging = false;
-        panel.style.transition = 'transform 0.24s cubic-bezier(0.22, 1, 0.36, 1)';
-        if (currentY > 75) {
-          closeUniversalSheet();
-        } else {
-          panel.style.transform = 'translateY(0)';
-        }
+        const dragged = currentY;
         currentY = 0;
+        if (dragged > 75) {
+          closeUniversalSheet();
+        } else if (dragged > 0) {
+          panel.style.transition = 'transform 0.24s cubic-bezier(0.22, 1, 0.36, 1)';
+          panel.style.transform = 'translateY(0px)';
+        }
       });
     }
 

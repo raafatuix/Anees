@@ -1,4 +1,4 @@
-const CACHE_NAME = 'anees-quran-v7';
+const CACHE_NAME = 'anees-quran-v8';
 const ASSETS = [
   './',
   './index.html',
