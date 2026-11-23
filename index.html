@@ -1087,11 +1087,18 @@
         .map(id => state.items.find(it => it.id === id))
         .filter(Boolean);
 
+      let selected = [];
       if (validRecent.length >= limit) {
-        return validRecent.slice(0, limit);
+        selected = validRecent.slice(0, limit);
+      } else {
+        const sortedByRecent = [...state.items].sort((a, b) => b.addedAt - a.addedAt);
+        selected = sortedByRecent.slice(0, Math.min(limit, sortedByRecent.length));
       }
-      const sortedByRecent = [...state.items].sort((a, b) => b.addedAt - a.addedAt);
-      return sortedByRecent.slice(0, Math.min(limit, sortedByRecent.length));
+
+      return selected.sort((a, b) => {
+        if (a.surahId !== b.surahId) return a.surahId - b.surahId;
+        return a.rubOrder - b.rubOrder;
+      });
     }
 
     function syncDailySession() {
@@ -2688,12 +2695,12 @@
             ${visibleItems.map(item => {
               const rubOrderFormatted = String(item.rubOrder).padStart(2, '0');
               return `
-                <div class="px-4 py-3.5 flex items-center justify-between gap-3">
+                <div onclick="openStartFarFromRubSheet('${item.id}')" class="px-4 py-3.5 flex items-center justify-between gap-3 cursor-pointer active:bg-black/[0.03] transition-colors">
                   <div class="min-w-0 flex-1">
                     <span class="text-xs font-bold ds-text-primary block mb-1 tabular-nums">#${rubOrderFormatted}</span>
                     <p class="font-quran text-lg ds-text-primary ayah-single-line">${item.title}</p>
                   </div>
-                  <button type="button" onclick="deleteSingleRubDirect('${item.id}')" aria-label="حذف الربع" class="p-1.5 shrink-0" style="color: var(--color-error);">
+                  <button type="button" onclick="event.stopPropagation(); deleteSingleRubDirect('${item.id}')" aria-label="حذف الربع" class="p-1.5 shrink-0" style="color: var(--color-error);">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                     </svg>
@@ -2716,10 +2723,59 @@
       `;
     }
 
+    function openStartFarFromRubSheet(itemId) {
+      const item = state.items.find(i => i.id === itemId);
+      if (!item) return;
+      const rubNum = String(item.rubOrder).padStart(2, '0');
+      openUniversalSheet(`
+        <div class="text-center space-y-4 pt-2">
+          <div class="w-16 h-16 rounded-full mx-auto flex items-center justify-center" style="background-color: var(--bg-success-soft); color: var(--color-success);">
+            <svg class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+              <circle cx="12" cy="12" r="9" />
+            </svg>
+          </div>
+
+          <div>
+            <h3 class="text-xl font-bold ds-text-primary">بدء الماضي البعيد من هذا الربع</h3>
+            <p class="text-[16px] ds-text-secondary mt-1.5 leading-relaxed">
+              هل تود أن تبدأ مراجعة الماضي البعيد من سورة ${item.surahName} (الربع #${rubNum})؟
+            </p>
+            <p class="font-quran text-lg ds-text-primary mt-2 px-3 py-2 rounded-2xl ds-pill-soft ayah-single-line">
+              ${item.title}
+            </p>
+          </div>
+
+          <button type="button" onclick="confirmStartFarFromRub('${item.id}')" class="w-full h-14 rounded-full ds-btn-primary font-medium text-[18px] flex items-center justify-center gap-2">
+            <span>نعم، ابدأ من هذا الربع</span>
+          </button>
+        </div>
+      `);
+    }
+
+    function confirmStartFarFromRub(itemId) {
+      sortItemsInMushafOrder();
+      const targetIdx = state.items.findIndex(i => i.id === itemId);
+      if (targetIdx === -1) return;
+
+      const item = state.items[targetIdx];
+      const rubNum = String(item.rubOrder).padStart(2, '0');
+
+      state.pointerIndex = targetIdx;
+      state.todaySession.farTasks = [];
+      state.todaySession.carriedOverCount = 0;
+      populateFarTasksForToday([]);
+
+      saveState();
+      closeUniversalSheet();
+      renderApp();
+      showToast(`تم بدء الماضي البعيد من سورة ${item.surahName} (#${rubNum})`, 'success');
+    }
+
     function normalizeArabicForSearch(str) {
       if (!str) return '';
       return str
-        .replace(/[\u0610-\u061A\u064B-\u065F\u0670\u06D6-\u06ED\u0640]/g, '') // Remove all Quranic tashkeel, harakat, waqf marks & tatweel
+        .replace(/[ؐ-ًؚ-ٰٟۖ-ۭـ]/g, '') // Remove all Quranic tashkeel, harakat, waqf marks & tatweel
         .replace(/[أإآٱ]/g, 'ا')
         .replace(/ى/g, 'ي')
         .replace(/ؤ/g, 'ء')
