@@ -2145,12 +2145,31 @@
       return streak;
     }
 
+    // هل اتراجع في اليوم ده؟ (offset: 0 النهارده، 1 إمبارح...)
+    function didReviewDaysAgo(offset) {
+      const d = new Date(Date.now() - offset * 86400000);
+      const iso = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().split('T')[0];
+      const log = state.historyLogs[iso];
+      return !!(log && log.completedTasks > 0);
+    }
+
+    // الهمة: يومين متتاليين = عالية | انقطع يوم = طيبة | يومين من غير مراجعة = ضعيفة
+    function getHemmaLevel() {
+      const t = didReviewDaysAgo(0), y = didReviewDaysAgo(1), y2 = didReviewDaysAgo(2);
+      if (t || y) {
+        const streakNow = calculateStreak();
+        return streakNow >= 2 ? 'high' : 'good';
+      }
+      return y2 ? 'good' : 'weak';
+    }
+
     function getLast7DaysChartData() {
       const days = [];
       const dayNames = ['الأحد', 'الاثنين', 'الثلاثاء', 'الاربعاء', 'الخميس', 'الجمعة', 'السبت'];
       const now = new Date();
 
-      for (let i = 6; i >= 0; i--) {
+      // زي فيجما: ٤ أيام فاتت + النهارده + يومين جايين (الأقدم على اليمين)
+      for (let i = 4; i >= -2; i--) {
         const d = new Date(now.getTime() - i * 86400000);
         const offset = d.getTimezoneOffset();
         const iso = new Date(d.getTime() - offset * 60000).toISOString().split('T')[0];
@@ -2185,10 +2204,11 @@
       // Hemma Status Badge
       let hemmaLabel = 'همة ضعيفة';
       let hemmaStyle = 'background-color: var(--bg-warning-soft); color: var(--color-warning);';
-      if (summary.todayPct >= 75) {
+      const hemmaLevel = getHemmaLevel();
+      if (hemmaLevel === 'high') {
         hemmaLabel = 'همة عالية';
         hemmaStyle = 'background-color: var(--bg-success-soft); color: var(--color-success);';
-      } else if (summary.todayPct >= 40) {
+      } else if (hemmaLevel === 'good') {
         hemmaLabel = 'همة طيبة';
         hemmaStyle = 'background-color: var(--bg-info-soft); color: var(--color-info);';
       }
@@ -2368,7 +2388,7 @@
                   barColor = 'var(--color-success)';
                   barHeight = 100;
                 } else if (d.pct > 0) {
-                  barColor = 'var(--color-accent)';
+                  barColor = 'var(--bg-surface-alt)';
                   barHeight = Math.max(22, d.pct);
                 }
                 return `
