@@ -431,7 +431,7 @@
     </div>
 
     <div class="splash-footer-anim relative z-10 text-center">
-      <span class="text-[16px] font-medium ds-text-secondary tracking-wide">App v1.0</span>
+      <span class="text-[16px] font-medium ds-text-secondary tracking-wide">App v1.7</span>
     </div>
   </div>
 
@@ -506,13 +506,19 @@
           <div class="w-11"></div>
         </div>
 
-        <div id="reviewFullScreenBody" class="px-4 pt-2 space-y-5" style="padding-bottom: calc(120px + env(safe-area-inset-bottom, 0px));"></div>
+        <div id="reviewFullScreenBody" class="px-4 pt-2 space-y-5" style="padding-bottom: calc(180px + env(safe-area-inset-bottom, 0px));"></div>
       </div>
 
       <!-- Sticky Bottom Action Button -->
       <div class="sticky-cta-bar">
-        <div>
-          <button onclick="addExtraRubToToday()" class="w-full h-14 rounded-full ds-btn-primary font-medium text-[18px] flex items-center justify-center gap-2 shadow-lg">
+        <div class="flex flex-col gap-2.5">
+          <button onclick="closeReviewSession()" class="w-full h-14 rounded-full font-medium text-[18px] flex items-center justify-center gap-2 active:scale-[0.98] transition" style="background-color: var(--color-primary-soft); color: var(--text-primary);">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M3 10.5L12 3l9 7.5M5 9.5V20h5v-5h4v5h5V9.5" />
+            </svg>
+            <span>العودة إلى الرئيسية</span>
+          </button>
+          <button id="reviewExtraCta" onclick="addExtraRubToToday()" class="w-full h-14 rounded-full ds-btn-primary font-medium text-[18px] flex items-center justify-center gap-2 shadow-lg">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14m7-7H5" />
             </svg>
@@ -641,6 +647,19 @@
       if (!pointerQuarter || pointerIndex === -1) pointerIndex = 0;
 
       const session = src.todaySession && typeof src.todaySession === 'object' ? src.todaySession : {};
+
+      // بيانات النظام القديم: الدورة تكمل من بعد آخر ربع اتسحب في ورد اليوم
+      // (مؤشر النظام القديم ممكن يتزحزح لأن كذا سورة قصيرة بتتجمع في ربع واحد)
+      if (src.quarterModel !== 1) {
+        const lastTask = (Array.isArray(session.farTasks) ? session.farTasks : []).slice().reverse()
+          .find(t => t && mapId(t.itemId) && !t.isExtra);
+        const lastQuarter = lastTask ? Number(mapId(lastTask.itemId).slice(1)) : 0;
+        if (lastQuarter && items.length) {
+          const idx = items.findIndex(i => i.quarter > lastQuarter);
+          pointerIndex = idx === -1 ? 0 : idx;
+        }
+      }
+
       const tasksById = new Map();
       (Array.isArray(session.farTasks) ? session.farTasks : []).forEach(t => {
         const id = t && mapId(t.itemId);
@@ -877,7 +896,8 @@
       },
       historyLogs: {},
       darkMode: false,
-      quarterModel: 1
+      quarterModel: 1,
+      farReturnQueue: []          // أرباع إضافية ما اتراجعتش (أو اتشالت) ترجع للدورة في أول سحب جاي
     };
 
     let state = loadState();
@@ -997,6 +1017,11 @@
       return new Set(getNearPastItems().map(it => it.id));
     }
 
+    // كل المحفوظ داخل في الماضي القريب، فمفيش أرباع للمراجعة الدورية لسه
+    function isFarPoolEmpty() {
+      return state.items.length > 0 && (state.dailyNearLimit ?? 0) > 0 && getFarPoolSize() === 0;
+    }
+
     // حجم دورة الماضي البعيد = المحفوظ ناقص أرباع الماضي القريب
     function getFarPoolSize() {
       return Math.max(0, state.items.length - getNearIdSet().size);
@@ -1026,6 +1051,13 @@
       }
 
       const nearIds = getNearIdSet();
+
+      // الربع الإضافي لليوم ده بس: لو ما اتراجعش ما يترحّلش، بس يرجع للدورة عشان ما يتخطاش
+      const undoneExtraIds = (state.todaySession.farTasks || [])
+        .filter(t => t.isExtra && !t.done && state.items.some(it => it.id === t.itemId))
+        .map(t => t.itemId);
+      state.farReturnQueue = [...new Set([...undoneExtraIds, ...(state.farReturnQueue || [])])];
+
       const uncompletedFromYesterday = (state.todaySession.farTasks || [])
         .filter(t => !t.done && !t.isExtra && !nearIds.has(t.itemId) && state.items.some(it => it.id === t.itemId))
         .map(t => ({ itemId: t.itemId, done: false, carriedOver: true }));
@@ -1046,6 +1078,18 @@
 
     // يسحب الربع التالي في دورة الماضي البعيد بترتيب المصحف، متخطياً أي ربع مستبعد
     function pullNextFarCandidate(excludeIds) {
+      // الأول: الأرباع الإضافية اللي اتسحبت قبل كده وما اتراجعتش، عشان ما تتخطاش من الدورة
+      const queue = Array.isArray(state.farReturnQueue) ? state.farReturnQueue : [];
+      while (queue.length) {
+        const id = queue.shift();
+        const queued = state.items.find(it => it.id === id);
+        if (queued && !excludeIds.has(queued.id)) {
+          state.farReturnQueue = queue;
+          return queued;
+        }
+      }
+      state.farReturnQueue = queue;
+
       const total = state.items.length;
       for (let safety = 0; safety < total; safety++) {
         const candidate = state.items[state.pointerIndex % total];
@@ -1087,7 +1131,10 @@
       syncDailySession();
       if (isReviewOpen) renderReviewFullScreen();
       renderApp();
-      showToast('بدأ يوم جديد، وتم تجهيز وردك', 'info');
+      // التوست بيظهر بس لو فيه ربع اتنقل من إمبارح (مش مراجَع)
+      if (state.todaySession.farTasks.some(t => t.carriedOver)) {
+        showToast('بدأ يوم جديد، وانتقل ما تبقّى من أمس إلى وردك', 'info');
+      }
       return true;
     }
 
@@ -1121,7 +1168,10 @@
       if (ensureTodaySession()) return;
       const idx = state.todaySession.farTasks.findIndex(t => t.itemId === itemId && t.isExtra);
       if (idx === -1) return;
-      state.todaySession.farTasks.splice(idx, 1);
+      const [removed] = state.todaySession.farTasks.splice(idx, 1);
+      if (!removed.done) {
+        state.farReturnQueue = [removed.itemId, ...(state.farReturnQueue || []).filter(id => id !== removed.itemId)];
+      }
       saveState();
       if (isReviewOpen) renderReviewFullScreen();
       renderApp();
@@ -2135,6 +2185,7 @@
       const isAllCompleted = summary.totalToday > 0 && summary.doneToday >= summary.totalToday;
       const nearPct = summary.nearItems.length > 0 ? Math.round((summary.nearDoneCount / summary.nearItems.length) * 100) : 0;
       const farPct = summary.farTasks.length > 0 ? Math.round((summary.farDoneCount / summary.farTasks.length) * 100) : 0;
+      const farPoolEmpty = isFarPoolEmpty();
 
       // Hemma Status Badge
       let hemmaLabel = 'همة ضعيفة';
@@ -2208,8 +2259,11 @@
 
                 <!-- الماضي البعيد -->
                 <div class="rounded-2xl p-3.5 border ds-border text-center">
-                  <span class="text-2xl font-bold ds-text-primary block tabular-nums">${summary.farTasks.length}</span>
-                  <span class="text-[14px] font-medium ds-text-secondary block mt-0.5 mb-3">الماضي البعيد</span>
+                  <span class="text-2xl font-bold block tabular-nums ${farPoolEmpty ? 'ds-text-secondary' : 'ds-text-primary'}">${farPoolEmpty ? '—' : summary.farTasks.length}</span>
+                  <span class="text-[14px] font-medium ds-text-secondary block mt-0.5 ${farPoolEmpty ? 'mb-1' : 'mb-3'}">الماضي البعيد</span>
+                  ${farPoolEmpty ? `
+                    <span class="text-[14px] ds-text-secondary block leading-snug">يبدأ مع زيادة محفوظك</span>
+                  ` : `
                   <div class="flex items-center gap-2 tabular-nums">
                     <span class="text-[14px] font-bold ds-text-primary shrink-0">
                       ${isAllCompleted ? '100%' : `${summary.farDoneCount}/${summary.farTasks.length}`}
@@ -2218,6 +2272,7 @@
                       <div class="h-full rounded-full transition-all duration-300" style="width: ${farPct}%; background-color: var(--color-success);"></div>
                     </div>
                   </div>
+                  `}
                 </div>
               </div>
             `}
@@ -2363,6 +2418,9 @@
       if (!bodyEl) return;
 
       const summary = getTodaySummaryData();
+      const farPoolEmpty = isFarPoolEmpty();
+      const extraCta = document.getElementById('reviewExtraCta');
+      if (extraCta) extraCta.classList.toggle('hidden', farPoolEmpty);
       const userName = escapeHTML((state.userProfile.name || '').trim() || 'محمود');
       const isAllDone = summary.totalToday > 0 && summary.doneToday >= summary.totalToday;
 
@@ -2438,8 +2496,27 @@
               <h3 class="text-[18px] font-bold ds-text-primary">الماضي البعيد</h3>
               <p class="text-[14px] ds-text-secondary mt-0.5">مراجعة مرتبة بترتيب المصحف الشريف</p>
             </div>
-            <span class="text-[16px] font-bold ds-text-primary tabular-nums">${summary.farDoneCount}/${summary.farTasks.length}</span>
+            ${farPoolEmpty ? '' : `<span class="text-[16px] font-bold ds-text-primary tabular-nums">${summary.farDoneCount}/${summary.farTasks.length}</span>`}
           </div>
+
+          ${farPoolEmpty ? `
+            <!-- Far Past Empty State (فيجما: 15b Review - Far Past Empty) -->
+            <div class="ds-surface-clean rounded-[24px] px-4 py-6 flex flex-col items-center text-center gap-3">
+              <div class="w-14 h-14 rounded-full flex items-center justify-center" style="background-color: var(--bg-success-soft); color: var(--color-success);">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h5M4.5 9A8.5 8.5 0 1112 20.5a8.46 8.46 0 01-6-2.5M12 8.5l3 3.5-3 3.5" />
+                </svg>
+              </div>
+              <h4 class="text-[18px] font-bold ds-text-primary leading-snug">ما شاء الله، محفوظك كله حاضر في وردك اليومي</h4>
+              <p class="text-[16px] ds-text-secondary leading-relaxed">كلما أضفت حفظاً جديداً، انتقل الأقدم إلى المراجعة الدورية</p>
+              <button type="button" onclick="openAddModal()" class="w-full h-12 mt-1 rounded-full text-[16px] font-medium flex items-center justify-center gap-2 active:scale-[0.98] transition" style="background-color: var(--color-primary-soft); color: var(--text-primary);">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14m7-7H5" />
+                </svg>
+                <span>إضافة محفوظات</span>
+              </button>
+            </div>
+          ` : ''}
 
           <div class="space-y-2.5">
             ${summary.farTasks.map(task => {
@@ -2669,6 +2746,7 @@
       const item = state.items[targetIdx];
 
       state.pointerIndex = targetIdx;
+      state.farReturnQueue = [];
       state.todaySession.farTasks = [];
       state.todaySession.carriedOverCount = 0;
       populateFarTasksForToday([]);
@@ -2992,6 +3070,7 @@
     function resetCycleFromStart() {
       state.pointerIndex = 0;
       state.cycleReviewedCount = 0;
+      state.farReturnQueue = [];
       state.todaySession.farTasks = [];
       populateFarTasksForToday([]);
       saveState();
@@ -3272,6 +3351,7 @@ ${window.location.href}`);
       }
       saveState();
       closeUniversalSheet();
+      if (isReviewOpen) renderReviewFullScreen();
       renderApp();
       if (count > 0) showToast(`تمت إضافة ${count} ${count === 1 ? 'ربع' : 'أرباع'} إلى محفوظاتك`, 'success');
       else showToast('المحفوظات المختارة مضافة مسبقاً', 'info');
