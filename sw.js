@@ -1,5 +1,5 @@
 // غيّر رقم الإصدار ده مع كل رفع، عشان الكاش القديم يتمسح
-const CACHE_NAME = 'anees-quran-v20';
+const CACHE_NAME = 'anees-quran-v21';
 
 // الملفات اللي التطبيق محتاجها عشان يشتغل من غير نت
 const ASSETS = [
