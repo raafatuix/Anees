@@ -506,19 +506,14 @@
           <div class="w-11"></div>
         </div>
 
-        <div id="reviewFullScreenBody" class="px-4 pt-2 space-y-5" style="padding-bottom: calc(180px + env(safe-area-inset-bottom, 0px));"></div>
-      </div>
+        <div id="reviewFullScreenBody" class="px-4 pt-2 space-y-5"></div>
 
-      <!-- Sticky Bottom Action Button -->
-      <div class="sticky-cta-bar">
-        <div class="flex flex-col gap-2.5">
-          <button onclick="closeReviewSession()" class="w-full h-14 rounded-full font-medium text-[18px] flex items-center justify-center gap-2 active:scale-[0.98] transition" style="background-color: var(--color-primary-soft); color: var(--text-primary);">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M3 10.5L12 3l9 7.5M5 9.5V20h5v-5h4v5h5V9.5" />
-            </svg>
+        <!-- أزرار الإجراءات (مع المحتوى، مش sticky) -->
+        <div class="px-4 pt-6 flex flex-col gap-2.5" style="padding-bottom: calc(32px + env(safe-area-inset-bottom, 0px));">
+          <button onclick="closeReviewSession()" class="w-full h-14 rounded-full font-medium text-[18px] flex items-center justify-center active:scale-[0.98] transition" style="background-color: var(--color-primary-soft); color: var(--text-primary);">
             <span>العودة إلى الرئيسية</span>
           </button>
-          <button id="reviewExtraCta" onclick="addExtraRubToToday()" class="w-full h-14 rounded-full ds-btn-primary font-medium text-[18px] flex items-center justify-center gap-2 shadow-lg">
+          <button id="reviewExtraCta" onclick="addExtraRubToToday()" class="w-full h-14 rounded-full ds-btn-primary font-medium text-[18px] flex items-center justify-center gap-2">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14m7-7H5" />
             </svg>
