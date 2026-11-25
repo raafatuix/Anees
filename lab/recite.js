@@ -7,15 +7,10 @@
 
   const BUNDLE = 'vendor/tilawa-web.js?v=1.0.0-rc.1';
   const KIND = { wrong_word: 'كلمة غلط', omitted_word: 'كلمة ناقصة', added_word: 'كلمة زيادة', skipped_passage: 'تخطّي جزء' };
-  const SKIP_GAP = 3; // لو القفزة لقدّام أكتر من كده، الكلمات اللي في النص متتحسبش صح
-  // المحرك مش بيقفل على المكان غير بعد كلمتين على الأقل (minWords = 2 في tracker).
-  // فقبل القفل: لو أقوى المرشحين هو الكلمة الحالية أو اللي بعدها، نكشفها على طول.
-  // ده بيحل الكلمة اللي بتتقال لوحدها، والحروف المقطّعة في أول السورة (الم، حم…).
-  const TENTATIVE = { conf: 0.5, ahead: 1, top: 3 };
-  // القفزة لقدّام أكتر من SKIP_GAP متتصدقش من أول حدث (المحرك ممكن يتلخبط بعد كلمة غلط).
-  // بتتقبل لو المحرك أكّد skipped_passage، أو سمع القارئ مكمّل من المكان الجديد.
-  const JUMP_CONFIRM = 2; // كلمات تقدّم بعد مكان القفزة
-
+  // وضع البوابة: الصفحة متتخطّاش كلمة. تقف عند أول كلمة مش متأكدين منها لحد ما تتقال صح أو تتكشف.
+  const CONF = 0.5;      // أقل ثقة لمرشح غير مقفول (تقديري)
+  const MAX_STEP = 3;    // أقصى عدد كلمات يتكشف في حدث واحد (المحرك ممكن يبعت أكتر من كلمة مرة واحدة)
+  const PULLBACK = 3;    // لو خطأ اتأكد على كلمة ظهرت من شوية، نرجع لها ونخبّي اللي بعدها
   let libP = null, tilawaP = null;
   function lib() { return libP || (libP = import(new URL(BUNDLE, document.baseURI).href)); }
   function engine(onProgress) {
@@ -27,11 +22,10 @@
 
   /* حالة النطاق: مستقلة عن المحرك عشان تتختبر لوحدها */
   function createTrack(n) {
-    const status = new Array(n).fill('hidden');
-    const stats = { ok: 0, wrong: 0, shown: 0, accepted: 0, skipped: 0 };
-    const byId = new Map(); // checker id → index
+    const status = new Array(n).fill('hidden'); // hidden | ok | shown | err
+    const stats = { ok: 0, wrong: 0, shown: 0, accepted: 0 };
     const sus = new Set();
-    const opened = new Set(); // كلمات غلط اتكشفت بـ «أظهر الكلمة»
+    const opened = new Set(); // للتوافق مع العرض: كلمات غلط ظاهرة بالأحمر
     let pos = 0, lastErr = null;
 
     function set(i, s) {
@@ -39,50 +33,54 @@
       if (old === 'ok') stats.ok--; if (s === 'ok') stats.ok++;
       status[i] = s;
     }
-    // آخر كلمة اتقرأت = k
-    function advanceTo(k) {
-      if (k < pos || k >= n) return false;
-      const gap = k - pos;
-      for (let i = pos; i < k; i++) if (status[i] === 'hidden') { if (gap > SKIP_GAP) { set(i, 'skip'); stats.skipped++; } else set(i, 'ok'); }
-      if (status[k] === 'hidden') set(k, 'ok');
+    const gated = () => pos < n && status[pos] === 'err';
+
+    // المحرك سمع لحد الكلمة k
+    function heard(k) {
+      if (k < pos || pos >= n) return false;
+      if (k === pos) { set(pos, 'ok'); if (lastErr && lastErr.k === pos) lastErr = null; sus.delete(pos); pos++; return true; }
+      if (gated()) return false;               // واقفين: لازم الكلمة الحالية الأول
+      if (k - pos > MAX_STEP) return gate('الكلمة دي مش واضحة');
+      for (let i = pos; i <= k; i++) { set(i, 'ok'); sus.delete(i); }
       pos = k + 1; return true;
     }
-    function checker(e, k) {
-      const known = byId.get(e.id);
-      if (e.state === 'suspected') { if (k >= 0) { sus.add(k); byId.set(e.id, k); } return null; }
-      if (e.state === 'resolved' || e.state === 'uncertain') {
-        if (known !== undefined) {
-          sus.delete(known);
-          // صحّح نفسه: الكلمة تظهر صح
-          if (status[known] === 'err') { set(known, known < pos ? 'ok' : 'hidden'); opened.delete(known); stats.wrong = Math.max(0, stats.wrong - 1); }
-          byId.delete(e.id);
-          if (lastErr && lastErr.id === e.id) lastErr = null;
-        }
-        return null;
+    // القارئ عدّى الكلمة الحالية من غير ما تتسمع صح
+    function gate(kind) {
+      if (pos >= n) return false;
+      if (status[pos] !== 'err') { set(pos, 'err'); stats.wrong++; }
+      lastErr = { k: pos, kind };
+      return true;
+    }
+    // خطأ مؤكد من المحرك على كلمة k
+    function mistake(k, kind) {
+      if (k < 0) { lastErr = { k: -1, kind }; return lastErr; }
+      if (k < pos) {
+        if (pos - k > PULLBACK) return null;   // قديم، نتجاهله
+        for (let i = k + 1; i < pos; i++) if (status[i] === 'ok') set(i, 'hidden');
+        pos = k;
       }
-      // confirmed
-      if (k >= 0) sus.delete(k);
-      stats.wrong++;
-      if (k >= 0 && e.errorClass !== 'added_word') set(k, 'err');
-      byId.set(e.id, k);
-      lastErr = { id: e.id, k, kind: KIND[e.errorClass] || e.errorClass };
+      if (k > pos) k = pos;                    // البوابة عند أول كلمة مش محسومة
+      gate(kind);
       return lastErr;
     }
-    // «كنت صح»: الخطأ الأخير كان غلط من المحرك
+    // «كنت صح»: الكلمة الواقفين عندها صح
     function accept() {
-      if (!lastErr) return null;
-      const { k } = lastErr; lastErr = null;
-      if (k >= 0 && status[k] === 'err') set(k, 'ok');
-      stats.wrong = Math.max(0, stats.wrong - 1); stats.accepted++;
+      if (!gated()) return null;
+      const k = pos; set(k, 'ok'); stats.wrong = Math.max(0, stats.wrong - 1); stats.accepted++; lastErr = null; pos++;
       return k;
     }
-    // «أظهر الكلمة»: لو فيه كلمة غلط لسه مخفية تتكشف هي، وإلا الكلمة الحالية
+    // «أظهر الكلمة»: تتكشف الكلمة الحالية ونكمل
     function reveal() {
-      if (lastErr && lastErr.k >= 0 && status[lastErr.k] === 'err' && !opened.has(lastErr.k)) { opened.add(lastErr.k); stats.shown++; return lastErr.k; }
       if (pos >= n) return null;
-      const i = pos; if (status[i] === 'hidden') { set(i, 'shown'); stats.shown++; } pos++; return i;
+      const k = pos;
+      if (status[k] === 'err') { opened.add(k); stats.shown++; }
+      else { set(k, 'shown'); stats.shown++; }
+      if (lastErr && lastErr.k === k) lastErr = null;
+      sus.delete(k); pos++;
+      return k;
     }
-    return { status, stats, sus, opened, advanceTo, checker, accept, reveal, get pos() { return pos; }, set pos(v) { pos = v; }, get done() { return pos >= n; }, get lastErr() { return lastErr; } };
+    return { status, stats, sus, opened, heard, gate, mistake, accept, reveal,
+      get pos() { return pos; }, get done() { return pos >= n; }, get gated() { return gated(); }, get lastErr() { return lastErr; } };
   }
 
   /* refs[i] = {s, a, w} لكل كلمة في النطاق بالترتيب (w من 1) */
@@ -97,7 +95,7 @@
     const segs = [];
     refs.forEach((r, i) => { const L = segs[segs.length - 1]; if (L && L.s === r.s) L.end = i; else segs.push({ s: r.s, start: i, end: i }); });
 
-    let tilawa = null, session = null, mic = null, want = false, busy = false, seg = -1, jump = null;
+    let tilawa = null, session = null, mic = null, want = false, busy = false, seg = -1;
     const log = [];
 
     function segOf(i) { return segs.findIndex(g => i >= g.start && i <= g.end); }
@@ -117,32 +115,35 @@
     function onEvent(e) {
       if (e.type === 'position') {
         ui.trace && ui.trace(e, e.observed[0] ? at(e.observed[0].word) : -1);
-        if (e.state === 'lost' || !e.observed[0]) return;
-        let k = -1;
-        if (e.state === 'locked') k = at(e.observed[0].word);
-        else {
-          for (const c of e.observed.slice(0, TENTATIVE.top)) {
-            const j = at(c.word);
-            if (j >= track.pos && j <= track.pos + TENTATIVE.ahead && c.confidence >= TENTATIVE.conf) { k = j; break; }
-          }
+        if (e.state === 'lost' || !e.observed[0] || track.done) return;
+        const locked = e.state === 'locked';
+        let moved = false;
+        for (const c of e.observed.slice(0, locked ? 1 : 3)) {
+          const k = at(c.word);
+          if (k < track.pos) continue;
+          if (!locked && c.confidence < CONF) continue;
+          if (!locked && k > track.pos + 1) continue;      // قبل القفل: الكلمة الحالية أو اللي بعدها بس
+          moved = track.heard(k);
+          if (!moved && locked && k > track.pos && !track.gated) moved = track.gate('الكلمة دي مش واضحة');
+          if (moved || locked) break;
         }
-        if (k >= 0 && e.state === 'locked' && k - track.pos > SKIP_GAP) {
-          // قفزة بعيدة: نستنى تأكيد
-          if (!jump || k < jump.k) jump = { k, first: k };
-          else jump.k = k;
-          if (jump.k - jump.first >= JUMP_CONFIRM) { const t = jump.k; jump = null; if (track.advanceTo(t)) ui.render(); }
-          return;
-        }
-        if (k >= 0) jump = null;
-        if (k >= 0 && track.advanceTo(k)) ui.render();
+        // مقفول على مكان بعد الكلمة الحالية واحنا واقفين: القارئ كمّل من غير ما يصلّحها
+        if (moved) { ui.render(); const L = track.lastErr; if (L && L.k === track.pos && track.gated) ui.mistake && ui.mistake(L); }
         if (track.done) { stop(); ui.done && ui.done(); return; }
         if (want && segs[seg] && track.pos > segs[seg].end) nextSegment();
       } else if (e.type === 'checker') {
         const k = at(e.location);
-        if (e.errorClass === 'skipped_passage' && e.state === 'confirmed' && jump) { const t = jump.k; jump = null; track.advanceTo(t); }
-        const err = track.checker(e, k);
+        if (e.state === 'suspected') { if (k >= track.pos) track.sus.add(k); ui.render(); return; }
+        if (e.state === 'resolved' || e.state === 'uncertain') {
+          track.sus.delete(k);
+          // صحّح نفسه على الكلمة الواقفين عندها
+          if (e.state === 'resolved' && k === track.pos && track.gated) track.heard(k);
+          ui.render(); return;
+        }
+        const kind = KIND[e.errorClass] || e.errorClass;
+        const err = e.errorClass === 'added_word' ? { k: -1, kind } : track.mistake(k, kind);
         if (err) {
-          log.push({ word: k >= 0 ? ui.wordText(k) : '—', kind: err.kind, expected: e.expected || '', observed: e.observed || '', conf: e.confidence });
+          log.push({ word: k >= 0 ? ui.wordText(k) : '—', kind, expected: e.expected || '', observed: e.observed || '', conf: e.confidence });
           ui.mistake && ui.mistake(err);
         }
         ui.render();

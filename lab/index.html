@@ -131,7 +131,7 @@ input[type=text]{flex:1;min-width:0}
   <p class="note">الموديل: Tilawa (CC BY 4.0)، متدرّب على tlog من Tarteel وQUA من QUD Technologies.</p>
 </section>
 
-<script src="recite.js?v=20261125f"></script>
+<script src="recite.js?v=20261125g"></script>
 <script src="mushaf.js?v=20261125c"></script>
 <script src="quarters.js?v=20261125c"></script>
 <script>
@@ -265,7 +265,7 @@ input[type=text]{flex:1;min-width:0}
   function onMistake(err){
     const c=err.k>=0?spans[err.k]:null;
     if(c){ c.classList.add('bad'); clearTimeout(badTimer); badTimer=setTimeout(()=>c.classList.remove('bad'),700); }
-    $('alertT').textContent=err.kind+(err.k>=0?': '+spanText(rngWords[err.k]):'');
+    $('alertT').textContent=err.k>=0?err.kind+'. قولها صح أو اضغط «أظهر الكلمة»':err.kind;
     setAlert(true); clearTimeout(onMistake.t); onMistake.t=setTimeout(()=>setAlert(false),6000);
   }
 

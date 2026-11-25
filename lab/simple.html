@@ -75,7 +75,7 @@ details{font-size:14px;background:var(--surface);border:1px solid var(--line);bo
 </div>
 
 <script src="data.js?v=20261125a"></script>
-<script src="recite.js?v=20261125f"></script>
+<script src="recite.js?v=20261125g"></script>
 <script>
 (function(){
   const $ = (id)=>document.getElementById(id);
@@ -128,7 +128,7 @@ details{font-size:14px;background:var(--surface);border:1px solid var(--line);bo
   function onMistake(err){
     const c=err.k>=0?spans[err.k]:null;
     if(c){ c.classList.add('bad'); clearTimeout(badTimer); badTimer=setTimeout(()=>c.classList.remove('bad'),700); }
-    $('alertT').textContent=err.kind+(err.k>=0?': '+words[err.k]:'');
+    $('alertT').textContent=err.k>=0?err.kind+'. قولها صح أو اضغط «أظهر الكلمة»':err.kind;
     setAlert(true); clearTimeout(onMistake.t); onMistake.t=setTimeout(()=>setAlert(false),6000);
   }
 
