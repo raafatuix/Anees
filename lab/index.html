@@ -34,7 +34,10 @@ button{font:inherit;color:inherit;cursor:pointer}
 .w.ok{color:inherit}
 .w.shown{color:inherit;background:#fff3d6}
 .w.cur{box-shadow:inset 0 -3px 0 var(--primary)}
-.w.bad{box-shadow:inset 0 -3px 0 var(--warn);background:var(--warn-soft);animation:sh .35s}
+.w.err{color:var(--warn);box-shadow:inset 0 -3px 0 var(--warn);background:var(--warn-soft)}
+.w.skip{color:#c98a84;background:var(--warn-soft)}
+.w.sus{box-shadow:inset 0 -3px 0 #e0a100}
+.w.bad{animation:sh .35s}
 @keyframes sh{25%{transform:translateX(4px)}75%{transform:translateX(-4px)}}
 .mk{flex:none;display:inline-block}
 .empty{margin:auto;color:var(--muted);text-align:center;padding:24px}
@@ -89,7 +92,7 @@ input[type=text]{flex:1;min-width:0}
 
 <div class="toast" id="toast"></div>
 <div class="float">
-  <div class="alert" id="alert" role="alert"><span>الكلمة دي غلط</span><button id="accept">كنت صح</button></div>
+  <div class="alert" id="alert" role="alert"><span id="alertT">الكلمة دي غلط</span><button id="accept">كنت صح</button></div>
   <button class="chip" id="show">أظهر الكلمة</button>
 </div>
 
@@ -120,19 +123,19 @@ input[type=text]{flex:1;min-width:0}
   <h2>الأخطاء والضبط</h2>
   <div class="note" id="stats">—</div>
   <div id="wl"><div>لسه مفيش كلمات اتعلّمت غلط.</div></div>
-  <div class="row"><button class="sbtn" id="cp">انسخ القايمة</button><span class="note">درجة التساهل: <b id="thv">0.72</b></span></div>
-  <input type="range" id="th" min="0.5" max="0.95" step="0.01" value="0.72" style="width:100%">
-  <div class="row"><input type="text" id="sim" placeholder="اختبار بدون مايك: اكتب كلمات"><button class="sbtn" id="simGo">إرسال</button></div>
+  <div class="row"><button class="sbtn" id="cp">انسخ القايمة</button></div>
+  <p class="note" id="eng">محرك الصوت: Tilawa، بيشتغل على جهازك والصوت مش بيتبعت. أول مرة بيحمّل 25 لـ 68 ميجا وبعدها بيشتغل من غير نت.</p>
+  <p class="note">الموديل: Tilawa (CC BY 4.0)، متدرّب على tlog من Tarteel وQUA من QUD Technologies.</p>
 </section>
 
-<script src="matcher.js?v=20261125c"></script>
+<script src="recite.js?v=20261125d"></script>
 <script src="mushaf.js?v=20261125c"></script>
 <script src="quarters.js?v=20261125c"></script>
 <script>
 (function(){
   const $=id=>document.getElementById(id);
   const AR=n=>String(n).replace(/\d/g,d=>'٠١٢٣٤٥٦٧٨٩'[d]);
-  let data=null, idx=null, sess=null, spans=[], rngWords=[], wlog=[], threshold=0.72, mode='app', picked=new Set(), pageEls=new Map(), pageList=[], cur=0, hideOn=true, rubStarts=[], pageFirst=[];
+  let data=null, idx=null, rc=null, spans=[], rngWords=[], mode='app', picked=new Set(), pageEls=new Map(), pageList=[], cur=0, hideOn=true, rubStarts=[], pageFirst=[];
 
   function toast(t){ const e=$('toast'); e.textContent=t; e.style.display='block'; clearTimeout(toast.t); toast.t=setTimeout(()=>e.style.display='none',2600); }
   function setStatus(t){ toast(t); }
@@ -194,9 +197,11 @@ input[type=text]{flex:1;min-width:0}
       });
       stage.appendChild(pg); pageEls.set(p,pg);
     });
-    sess=Matcher.createSession(rngWords.map(spanText),{threshold}); wlog=[]; renderLog(); setAlert(false);
+    const refs=rngWords.map(g=>{ const w=idx.words[g]; return {s:w.s,a:w.a,w:g-idx.verseFirst[w.s+':'+w.a]+1}; });
+    rc=LabRecite.createReciter(refs,{render,status:toast,mic:updateMic,wordText:k=>spanText(rngWords[k]),mistake:onMistake,done:()=>toast('خلّصت النطاق، ما شاء الله.')});
+    renderLog(); setAlert(false);
     closeSheets(); toast('بحمّل خط المصحف...');
-    loadFonts(pageList.map(p=>data.pages[p-1].f)).then(ok=>{ if(!ok) toast('تعذّر تحميل خط المصحف، هعرض بخط بديل.'); else toast('جاهز. اضغط زرار المايك وابدأ.'); showPage(0); render(true); });
+    loadFonts(pageList.map(p=>data.pages[p-1].f)).then(ok=>{ if(!ok) toast('تعذّر تحميل خط المصحف، هعرض بخط بديل.'); else toast('جاهز. اضغط زرار المايك وابدأ.'); showPage(0); render(); });
   }
 
   const FONT_BASE=(location.hostname==='localhost'||location.hostname==='127.0.0.1')?'fonts/':'https://cdn.jsdelivr.net/npm/quran-qcf4@1.1.0/fonts-woff2/';
@@ -238,65 +243,38 @@ input[type=text]{flex:1;min-width:0}
   let tx=null; $('stage').addEventListener('touchstart',e=>{ tx=e.touches[0].clientX; },{passive:true});
   $('stage').addEventListener('touchend',e=>{ if(tx===null) return; const dx=e.changedTouches[0].clientX-tx; tx=null; if(Math.abs(dx)>70) showPage(cur+(dx>0?1:-1)); });
 
-  function render(first){
-    if(!sess) return;
+  function render(){
+    if(!rc) return; const t=rc.track;
     $('stage').classList.toggle('hide',hideOn);
-    spans.forEach((s,i)=>{ if(!s) return; s.classList.remove('hidden','ok','shown','cur'); s.classList.add(sess.status[i]); if(i===sess.pos&&!sess.done) s.classList.add('cur'); });
-    const st=sess.stats; $('stats').textContent='صح: '+st.ok+' · غلط: '+st.wrong+' · أُظهرت: '+st.shown+' · "كنت صح": '+st.accepted+' · المتبقي: '+(rngWords.length-sess.pos);
-    if(sess.done){ toast('خلّصت النطاق، ما شاء الله.'); stopMic(); return; }
+    spans.forEach((s,i)=>{ if(!s) return; s.classList.remove('hidden','ok','shown','err','skip','cur','sus'); s.classList.add(t.status[i]); if(t.sus.has(i)) s.classList.add('sus'); if(i===t.pos&&!t.done) s.classList.add('cur'); });
+    const st=t.stats; $('stats').textContent='صح: '+st.ok+' · أخطاء: '+st.wrong+' · أُظهرت: '+st.shown+' · "كنت صح": '+st.accepted+' · المتبقي: '+(rngWords.length-t.pos);
+    renderLog();
+    if(t.done) return;
     // انتقال تلقائي للصفحة اللي فيها الكلمة الحالية
-    const p=idx.words[rngWords[sess.pos]].p, i=pageList.indexOf(p); if(i>=0&&i!==cur) showPage(i);
+    const p=idx.words[rngWords[t.pos]].p, i=pageList.indexOf(p); if(i>=0&&i!==cur) showPage(i);
   }
   function setAlert(on){ $('alert').classList.toggle('on',on); $('show').style.display=on?'none':''; }
-  function renderLog(){ const w=$('wl'); w.innerHTML=''; wlog.slice(-30).forEach(x=>{ const d=document.createElement('div'); d.textContent='متوقع: '+x.exn+'  |  سمع: '+x.sp+'  |  '+x.sc; w.appendChild(d); }); if(!wlog.length) w.innerHTML='<div>لسه مفيش كلمات اتعلّمت غلط.</div>'; }
+  function renderLog(){ const w=$('wl'); const L=rc?rc.log:[]; w.innerHTML=''; L.slice(-30).forEach(x=>{ const d=document.createElement('div'); d.textContent=x.kind+': '+x.word+'  |  متوقع: '+x.expected+'  |  سمع: '+x.observed+'  |  '+x.conf.toFixed(2); w.appendChild(d); }); if(!L.length) w.innerHTML='<div>لسه مفيش أخطاء.</div>'; }
 
   let badTimer=null;
-  function handle(events){
-    if(!events.length) return;
-    let wrong=false;
-    events.forEach(e=>{ if(e.type==='wrong'){ wrong=true; wlog.push({exn:Matcher.normalize(spanText(rngWords[e.idx])),sp:e.spoken,sc:e.score.toFixed(2)}); } });
-    renderLog(); render();
-    if(wrong&&!sess.done){ const c=spans[sess.pos]; if(c){ c.classList.add('bad'); clearTimeout(badTimer); badTimer=setTimeout(()=>c.classList.remove('bad'),700);} $('alert').classList.add('on'); $('show').style.display='none'; }
-    else if(events.some(e=>e.type==='ok')) setAlert(false);
+  function onMistake(err){
+    const c=err.k>=0?spans[err.k]:null;
+    if(c){ c.classList.add('bad'); clearTimeout(badTimer); badTimer=setTimeout(()=>c.classList.remove('bad'),700); }
+    $('alertT').textContent=err.kind+(err.k>=0?': '+spanText(rngWords[err.k]):'');
+    setAlert(true); clearTimeout(onMistake.t); onMistake.t=setTimeout(()=>setAlert(false),6000);
   }
-  function feedWords(a){ if(!sess||!a.length||sess.done) return; handle(sess.feed(a)); }
 
-  // ===== المايك (جلسة واحدة ثابتة) =====
-  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-  let rec=null,want=false,running=false,restartT=null,fed={};
-  function ensureRec(){
-    if(rec||!SR) return;
-    rec=new SR(); rec.lang='ar-SA'; rec.continuous=true; rec.interimResults=true; rec.maxAlternatives=1;
-    rec.onstart=()=>{ running=true; fed={}; if(want) toast('بسمعك. ابدأ من الكلمة المعلّمة.'); };
-    rec.onresult=ev=>{
-      for(let i=ev.resultIndex;i<ev.results.length;i++){
-        const r=ev.results[i]; const ws=r[0].transcript.trim().split(/\s+/).filter(Boolean); const done=fed[i]||0;
-        const upto=r.isFinal?ws.length:Math.max(0,ws.length-1);
-        if(upto>done){ feedWords(ws.slice(done,upto)); fed[i]=upto; }
-      }
-    };
-    rec.onerror=e=>{
-      if(e.error==='not-allowed'||e.error==='service-not-allowed'){ want=false; toast('المايك مش مسموح. فعّل الإذن من إعدادات المتصفح.'); updateMic(); }
-      else if(e.error==='network') toast('مفيش اتصال بخدمة الصوت. اتأكد من الإنترنت.');
-      else if(e.error==='audio-capture'){ want=false; toast('مفيش مايك متاح، يمكن تطبيق تاني ماسكه.'); updateMic(); }
-      else if(e.error!=='no-speech'&&e.error!=='aborted') toast('خطأ في الصوت: '+e.error);
-    };
-    rec.onend=()=>{ running=false; if(want){ clearTimeout(restartT); restartT=setTimeout(doStart,300); } updateMic(); };
-  }
-  function doStart(){ if(!want||running) return; ensureRec(); try{ rec.start(); }catch(_){ restartT=setTimeout(doStart,400); } }
-  function startMic(){ if(!SR){ toast('المتصفح ده مش بيدعم التعرف على الصوت. جرّب Chrome.'); return; } if(!sess){ toast('اختار النطاق الأول.'); openSheet('shRange'); return; } want=true; updateMic(); doStart(); }
-  function stopMic(){ want=false; clearTimeout(restartT); if(rec&&running){ try{rec.abort();}catch(_){} } updateMic(); }
-  function updateMic(){ $('mic').classList.toggle('rec',want); $('mic').setAttribute('aria-pressed',want); }
+  // ===== المايك: محرك Tilawa على الجهاز =====
+  function startMic(){ if(!rc){ toast('اختار النطاق الأول.'); openSheet('shRange'); return; } rc.start(); }
+  function stopMic(){ if(rc) rc.stop(); }
+  function updateMic(on){ $('mic').classList.toggle('rec',!!on); $('mic').setAttribute('aria-pressed',!!on); }
 
-  $('mic').onclick=()=>want?stopMic():startMic();
+  $('mic').onclick=()=>rc&&rc.listening?stopMic():startMic();
   $('go').onclick=start;
-  $('show').onclick=()=>{ if(!sess||sess.done) return; sess.reveal(); setAlert(false); render(); };
-  $('accept').onclick=()=>{ if(!sess) return; sess.accept(); setAlert(false); render(); };
-  $('simGo').onclick=()=>{ const v=$('sim').value.trim(); if(v){ feedWords(v.split(/\s+/)); $('sim').value=''; } };
-  $('sim').addEventListener('keydown',e=>{ if(e.key==='Enter') $('simGo').click(); });
-  $('th').oninput=e=>{ threshold=+e.target.value; $('thv').textContent=threshold.toFixed(2); if(sess) sess.threshold(threshold); };
-  $('cp').onclick=()=>{ const t=wlog.map(x=>x.exn+' | '+x.sp+' | '+x.sc).join('\n'); if(navigator.clipboard) navigator.clipboard.writeText(t).then(()=>toast('اتنسخت.'),()=>toast('تعذّر النسخ.')); };
-  window.__lab={get sess(){return sess}};
+  $('show').onclick=()=>{ if(!rc||rc.track.done) return; rc.reveal(); setAlert(false); };
+  $('accept').onclick=()=>{ if(!rc) return; rc.accept(); setAlert(false); };
+  $('cp').onclick=()=>{ const t=(rc?rc.log:[]).map(x=>x.kind+' | '+x.word+' | '+x.expected+' | '+x.observed+' | '+x.conf.toFixed(2)).join('\n'); if(navigator.clipboard) navigator.clipboard.writeText(t).then(()=>toast('اتنسخت.'),()=>toast('تعذّر النسخ.')); };
+  window.__lab={get rc(){return rc}};
 })();
 </script>
 </body>
