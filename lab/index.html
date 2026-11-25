@@ -23,21 +23,20 @@ button{font:inherit;color:inherit;cursor:pointer}
 .stage{flex:1;min-height:0;position:relative;touch-action:pan-y}
 .pg{position:absolute;inset:0;display:none;flex-direction:column;justify-content:center;padding:6px 10px}
 .pg.on{display:flex}
-.ln{display:flex;justify-content:space-between;align-items:center;white-space:nowrap;font-family:'AmiriQuran','Amiri',serif;line-height:1;height:var(--lh,44px);flex:none;direction:rtl;border-bottom:1px solid transparent;padding:0 2px}
+.ln{display:flex;justify-content:space-between;align-items:center;white-space:nowrap;font-family:var(--pf),serif;line-height:1;height:var(--lh,44px);flex:none;direction:rtl;border-bottom:1px solid transparent;padding:0 2px}
 .hide .ln.t{border-bottom-color:var(--line)}
 .ln.c{justify-content:center}
-.ln.h{justify-content:center;margin:2px 4px;border:1.5px double #8a8a8a;border-radius:8px;height:calc(var(--lh,44px) - 6px);background:#f1efe9}
+.ln.h,.ln.c{font-family:'QCF4_QBSML',serif;justify-content:center}
+.ln.h{border-bottom-color:transparent}
 .w{display:inline-block;flex:none;border-radius:4px}
 .w.out{color:#8d8d8d}
 .hide .w.hidden{color:transparent;user-select:none}
-.w.ok{color:var(--primary)}
-.w.shown{color:#8a5a00;background:#fff3d6}
+.w.ok{color:inherit}
+.w.shown{color:inherit;background:#fff3d6}
 .w.cur{box-shadow:inset 0 -3px 0 var(--primary)}
 .w.bad{box-shadow:inset 0 -3px 0 var(--warn);background:var(--warn-soft);animation:sh .35s}
 @keyframes sh{25%{transform:translateX(4px)}75%{transform:translateX(-4px)}}
-.mk{flex:none;display:inline-grid;place-items:center;position:relative;width:1.55em;height:1.55em;margin:0 2px;border:1.4px solid #222;border-radius:50%;font-family:system-ui,sans-serif;font-size:.5em;font-weight:700;box-shadow:0 0 0 2px var(--bg),0 0 0 3px #222;background:var(--bg)}
-.mk::before{content:'';position:absolute;top:-.55em;left:50%;width:.5em;height:.5em;transform:translateX(-50%);border:1.3px solid #222;border-radius:50%;background:var(--bg)}
-.mk.sj{border-radius:8px}
+.mk{flex:none;display:inline-block}
 .empty{margin:auto;color:var(--muted);text-align:center;padding:24px}
 /* العائمة */
 .float{position:fixed;inset:auto 0 calc(86px + env(safe-area-inset-bottom)) 0;display:flex;justify-content:center;align-items:center;gap:8px;pointer-events:none;z-index:4}
@@ -126,9 +125,9 @@ input[type=text]{flex:1;min-width:0}
   <div class="row"><input type="text" id="sim" placeholder="اختبار بدون مايك: اكتب كلمات"><button class="sbtn" id="simGo">إرسال</button></div>
 </section>
 
-<script src="matcher.js?v=20261125b"></script>
-<script src="mushaf.js?v=20261125b"></script>
-<script src="quarters.js?v=20261125b"></script>
+<script src="matcher.js?v=20261125c"></script>
+<script src="mushaf.js?v=20261125c"></script>
+<script src="quarters.js?v=20261125c"></script>
 <script>
 (function(){
   const $=id=>document.getElementById(id);
@@ -138,7 +137,7 @@ input[type=text]{flex:1;min-width:0}
   function toast(t){ const e=$('toast'); e.textContent=t; e.style.display='block'; clearTimeout(toast.t); toast.t=setTimeout(()=>e.style.display='none',2600); }
   function setStatus(t){ toast(t); }
 
-  fetch('mushaf.json?v=20261125b').then(r=>r.json()).then(d=>{ data=d; idx=MushafLab.buildIndex(d); initUI(); }).catch(()=>{ $('empty').textContent='تعذّر تحميل المصحف. اتأكد من الاتصال.'; });
+  fetch('mushaf.json?v=20261125c').then(r=>r.json()).then(d=>{ data=d; idx=MushafLab.buildIndex(d); initUI(); }).catch(()=>{ $('empty').textContent='تعذّر تحميل المصحف. اتأكد من الاتصال.'; });
 
   function openSheet(id){ $('scrim').classList.add('on'); $(id).classList.add('on'); }
   function closeSheets(){ $('scrim').classList.remove('on'); document.querySelectorAll('.sheet').forEach(s=>s.classList.remove('on')); }
@@ -164,7 +163,7 @@ input[type=text]{flex:1;min-width:0}
   }
 
   // ===== بناء الصفحات =====
-  function spanText(g){ const w=idx.words[g]; return data.pages[w.p-1][w.l].i[w.k]; }
+  function spanText(g){ const w=idx.words[g]; return data.pages[w.p-1].l[w.l].i[w.k][1]; }
   function start(){
     stopMic(); if(!idx) return;
     const sel=ranges(); if(!sel.length){ toast('اختار نطاق الأول.'); return; }
@@ -173,20 +172,21 @@ input[type=text]{flex:1;min-width:0}
     const pos=new Map(); rngWords.forEach((g,k)=>pos.set(g,k));
     pageList=[...new Set(rngWords.map(i=>idx.words[i].p))].sort((a,b)=>a-b);
     const gmap=new Map(); let g=0;
-    data.pages.forEach((lines,pi)=>lines.forEach((ln,li)=>{ if(ln.t==='l') ln.i.forEach((it,k)=>{ if(typeof it==='string'&&it!=='۩') gmap.set((pi+1)+'_'+li+'_'+k,g++); }); }));
+    data.pages.forEach((pg,pi)=>pg.l.forEach((ln,li)=>{ if(ln.t==='l') ln.i.forEach((it,k)=>{ if(it[0]===0) gmap.set((pi+1)+'_'+li+'_'+k,g++); }); }));
     const stage=$('stage'); stage.innerHTML=''; pageEls.clear(); spans=new Array(rngWords.length);
     pageList.forEach(p=>{
-      const pg=document.createElement('section'); pg.className='pg'; pg.dataset.p=p;
-      data.pages[p-1].forEach((ln,li)=>{
+      const P=data.pages[p-1];
+      const pg=document.createElement('section'); pg.className='pg'; pg.dataset.p=p; pg.style.setProperty('--pf',"'"+P.f+"','AmiriQuran'");
+      P.l.forEach((ln,li)=>{
         const d=document.createElement('div'); d.className='ln';
-        if(ln.t==='h'){ d.classList.add('h'); d.textContent='سُورَةُ '+data.names[ln.n]; }
-        else if(ln.t==='b'){ d.classList.add('c'); d.textContent='بِسۡمِ ٱللَّهِ ٱلرَّحۡمَٰنِ ٱلرَّحِيمِ'; }
+        if(ln.t==='h'){ d.classList.add('h'); d.textContent=ln.c; }
+        else if(ln.t==='b'){ d.classList.add('c'); d.textContent=ln.c; }
         else { d.classList.add('t');
           ln.i.forEach((it,k)=>{
             const s=document.createElement('span');
-            if(typeof it==='number'){ s.className='mk'; s.textContent=AR(it); }
-            else if(it==='۩'){ s.className='mk sj'; s.textContent='۩'; }
-            else { s.className='w'; s.textContent=it; const kk=pos.get(gmap.get(p+'_'+li+'_'+k)); if(kk===undefined) s.classList.add('out'); else { spans[kk]=s; } }
+            if(it[0]===1){ s.className='mk'; s.textContent=it[2]; }
+            else if(it[0]===2){ s.className='mk'; s.textContent=it[2]; }
+            else { s.className='w'; s.textContent=it[2]; const kk=pos.get(gmap.get(p+'_'+li+'_'+k)); if(kk===undefined) s.classList.add('out'); else { spans[kk]=s; } }
             d.appendChild(s);
           });
         }
@@ -195,21 +195,24 @@ input[type=text]{flex:1;min-width:0}
       stage.appendChild(pg); pageEls.set(p,pg);
     });
     sess=Matcher.createSession(rngWords.map(spanText),{threshold}); wlog=[]; renderLog(); setAlert(false);
-    closeSheets(); showPage(0); render(true); toast('جاهز. اضغط زرار المايك وابدأ.');
+    closeSheets(); toast('بحمّل خط المصحف...');
+    loadFonts(pageList.map(p=>data.pages[p-1].f)).then(ok=>{ if(!ok) toast('تعذّر تحميل خط المصحف، هعرض بخط بديل.'); else toast('جاهز. اضغط زرار المايك وابدأ.'); showPage(0); render(true); });
   }
+
+  const FONT_BASE=(location.hostname==='localhost'||location.hostname==='127.0.0.1')?'fonts/':'https://cdn.jsdelivr.net/npm/quran-qcf4@1.1.0/fonts-woff2/';
+  const fontP={};
+  function loadFont(name){ if(!fontP[name]){ const file=name==='QCF4_QBSML'?name:name+'_W'; const ff=new FontFace(name,'url('+FONT_BASE+file+'.woff2)'); fontP[name]=ff.load().then(f=>{ document.fonts.add(f); return true; }).catch(()=>false); } return fontP[name]; }
+  function loadFonts(list){ return Promise.all([...new Set([...list,'QCF4_QBSML'])].map(loadFont)).then(r=>r.every(Boolean)); }
 
   // ضبط الخط: كل سطر يتمدّد لحد ما يملا العرض (زي المصحف)، وارتفاع السطر = ارتفاع الصفحة ÷ 15
   function layout(pg){
     const lh=Math.floor((pg.clientHeight-12)/15); pg.style.setProperty('--lh',lh+'px');
     const lines=[...pg.querySelectorAll('.ln.t')]; if(!lines.length) return;
-    const maxF=Math.min(lh*0.72,34);
-    lines.forEach(l=>l.style.fontSize='10px');
-    let base=maxF; const fits=(l,f)=>{ l.style.fontSize=f+'px'; return l.scrollWidth<=l.clientWidth+1; };
-    // أصغر حجم يتساع فيه أطول سطر
-    while(base>11 && !lines.every(l=>fits(l,base))) base-=0.5;
-    // كل سطر يكبر عن الأساس بحد أقصى 18% طالما بيتساع
-    lines.forEach(l=>{ let f=Math.min(base*1.18,maxF); while(f>base && !fits(l,f)) f-=0.5; l.style.fontSize=Math.max(f,base)+'px'; });
-    pg.querySelectorAll('.ln.h,.ln.c').forEach(l=>l.style.fontSize=(base*0.95)+'px');
+    let f=Math.min(lh*0.95,44); const fits=x=>{ lines.forEach(l=>l.style.fontSize=x+'px'); return lines.every(l=>l.scrollWidth<=l.clientWidth+1); };
+    while(f>10 && !fits(f)) f-=0.5;
+    lines.forEach(l=>l.style.fontSize=f+'px');
+    pg.querySelectorAll('.ln.h').forEach(l=>l.style.fontSize=Math.min(lh*0.9,f*1.5)+'px');
+    pg.querySelectorAll('.ln.c').forEach(l=>l.style.fontSize=f+'px');
   }
 
   function pageInfo(p){

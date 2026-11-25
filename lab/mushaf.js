@@ -3,21 +3,20 @@
   'use strict';
   // data = { names, pages:[ [ {t:'h',n}|{t:'b'}|{t:'l',i:[word|ayahNumber|'۩']] ] }
   function buildIndex(data) {
-    const words = [];           // {p: page, l: lineIdx, k: itemIdx, s: sura, a: ayah}
+    const words = [];           // {p, l, k, s, a}
     const verseFirst = {}, verseLast = {};
     let sura = 0, pending = [];
-    data.pages.forEach((lines, pi) => {
-      lines.forEach((ln, li) => {
+    data.pages.forEach((pg, pi) => {
+      pg.l.forEach((ln, li) => {
         if (ln.t === 'h') { sura = ln.n; pending = []; return; }
         if (ln.t !== 'l') return;
         ln.i.forEach((it, k) => {
-          if (typeof it === 'string') {
-            if (it === '۩') return;
+          if (it[0] === 0) {
             pending.push(words.length);
             words.push({ p: pi + 1, l: li, k, s: sura, a: 0 });
-          } else {
-            const key = sura + ':' + it;
-            pending.forEach(w => { words[w].a = it; });
+          } else if (it[0] === 1) {
+            const key = sura + ':' + it[1];
+            pending.forEach(w => { words[w].a = it[1]; });
             if (pending.length) { verseFirst[key] = pending[0]; verseLast[key] = pending[pending.length - 1]; }
             pending = [];
           }
