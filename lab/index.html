@@ -85,7 +85,7 @@ details{font-size:14px;background:var(--surface);border:1px solid var(--line);bo
   });
   const sel=$('sel'); units.forEach((u,i)=>{const o=document.createElement('option');o.value=i;o.textContent=u.label;sel.appendChild(o);});
 
-  let sess, words=[], spans=[], listening=false, rec=null, fed={}, badTimer=null, threshold=0.72;
+  let sess, words=[], spans=[], rec=null, fed={}, badTimer=null, threshold=0.72;
 
   const toArabicNum=(n)=>String(n).replace(/\d/g,d=>'٠١٢٣٤٥٦٧٨٩'[d]);
 
@@ -125,12 +125,14 @@ details{font-size:14px;background:var(--surface);border:1px solid var(--line);bo
   }
   function feedWords(arr){ if(!arr.length||sess.done) return; $('heard').textContent='سمعت: '+arr.join(' '); handle(sess.feed(arr)); }
 
-  // المايك
+  // المايك: جلسة واحدة ثابتة بتتعاد استخدامها، وإعادة التشغيل بعد onend بس
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  function startMic(){
-    if(!SR){ setStatus('المتصفح ده مش بيدعم التعرف على الصوت. جرّب Chrome، أو استخدم الاختبار بدون مايك.'); return; }
+  let want=false, running=false, restartT=null;
+  function ensureRec(){
+    if(rec||!SR) return;
     rec=new SR(); rec.lang='ar-SA'; rec.continuous=true; rec.interimResults=true; rec.maxAlternatives=1;
-    fed={};
+    rec.onstart=()=>{ running=true; fed={}; if(want) setStatus('بسمعك. ابدأ من الكلمة المعلّمة.'); };
+    rec.onaudiostart=()=>{ if(want) setStatus('المايك شغال، اتكلم.'); };
     rec.onresult=(ev)=>{
       for(let i=ev.resultIndex;i<ev.results.length;i++){
         const r=ev.results[i]; const ws=r[0].transcript.trim().split(/\s+/).filter(Boolean);
@@ -140,15 +142,36 @@ details{font-size:14px;background:var(--surface);border:1px solid var(--line);bo
         if(upto>done){ feedWords(ws.slice(done,upto)); fed[i]=upto; }
       }
     };
-    rec.onerror=(e)=>{ if(e.error==='not-allowed'||e.error==='service-not-allowed'){ setStatus('المايك مش مسموح. فعّل الإذن من إعدادات المتصفح.'); listening=false; updateMic(); } else if(e.error!=='no-speech'&&e.error!=='aborted'){ setStatus('خطأ في الصوت: '+e.error); } };
-    rec.onend=()=>{ if(listening){ fed={}; try{rec.start();}catch(_){} } };
-    try{ rec.start(); listening=true; setStatus('بسمعك. ابدأ من الكلمة المعلّمة.'); }catch(_){ setStatus('تعذّر تشغيل المايك.'); }
+    rec.onerror=(e)=>{
+      if(e.error==='not-allowed'||e.error==='service-not-allowed'){ want=false; setStatus('المايك مش مسموح. فعّل الإذن من إعدادات المتصفح.'); updateMic(); }
+      else if(e.error==='network'){ setStatus('مفيش اتصال بخدمة الصوت. اتأكد من الإنترنت.'); }
+      else if(e.error==='audio-capture'){ want=false; setStatus('مفيش مايك متاح، يمكن تطبيق تاني ماسكه.'); updateMic(); }
+      else if(e.error!=='no-speech'&&e.error!=='aborted'){ setStatus('خطأ في الصوت: '+e.error); }
+    };
+    rec.onend=()=>{
+      running=false;
+      if(want){ clearTimeout(restartT); restartT=setTimeout(doStart,300); }
+      else setStatus('المايك واقف.');
+      updateMic();
+    };
+  }
+  function doStart(){
+    if(!want||running) return;
+    ensureRec();
+    try{ rec.start(); }catch(_){ restartT=setTimeout(doStart,400); }
+  }
+  function startMic(){
+    if(!SR){ setStatus('المتصفح ده مش بيدعم التعرف على الصوت. جرّب Chrome، أو استخدم الاختبار بدون مايك.'); return; }
+    want=true; setStatus('بشغّل المايك...'); updateMic(); doStart();
+  }
+  function stopMic(){
+    want=false; clearTimeout(restartT);
+    if(rec&&running){ try{rec.abort();}catch(_){} }
     updateMic();
   }
-  function stopMic(){ listening=false; if(rec){ try{rec.onend=null;rec.stop();}catch(_){} rec=null; } updateMic(); }
-  function updateMic(){ const b=$('mic'); b.textContent=listening?'إيقاف':'ابدأ القراءة بالمايك'; b.classList.toggle('rec',listening); b.classList.toggle('primary',!listening); }
+  function updateMic(){ const b=$('mic'); b.textContent=want?'إيقاف':'ابدأ القراءة بالمايك'; b.classList.toggle('rec',want); b.classList.toggle('primary',!want); }
 
-  $('mic').onclick=()=>listening?stopMic():startMic();
+  $('mic').onclick=()=>want?stopMic():startMic();
   $('show').onclick=()=>{ if(sess.done) return; sess.reveal(); setAlert(false); render(); };
   $('accept').onclick=()=>{ sess.accept(); setAlert(false); render(); };
   $('restart').onclick=()=>load(sel.value);
