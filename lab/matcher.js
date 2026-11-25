@@ -43,10 +43,26 @@
 
   const stripAl = (w) => (w.length > 3 && w.startsWith('ال') ? w.slice(2) : w);
 
-  // التشابه بعد التطبيع، مع تساهل في "ال" التعريف لأن المحركات بتسقطها أحيانًا
+  // أشكال بديلة للكلمة: المحرك بيكتب الإملائي العادي، والمصحف عثماني
+  //  - الألف الخنجرية (ـٰ) ممكن تتكتب ألف أو تتساب
+  //  - النون المخفاة/المدغمة: بتتسقط أو بتتسمع ميم
+  function forms(raw) {
+    const base = normalize(raw);
+    const dag = normalize(String(raw || '').replace(/\u0670/g, 'ا'));
+    const set = new Set([base, dag]);
+    for (const f of [base, dag]) {
+      if (f.length > 2) {
+        set.add(f[0] + f.slice(1).replace(/ن/g, ''));
+        set.add(f.replace(/ن/g, 'م'));
+      }
+    }
+    return [...set].filter(Boolean);
+  }
   function similarity(spoken, expected) {
-    const a = normalize(spoken), b = normalize(expected);
-    return Math.max(sim(a, b), sim(stripAl(a), stripAl(b)));
+    const A = forms(spoken), B = forms(expected);
+    let best = 0;
+    for (const a of A) for (const b of B) best = Math.max(best, sim(a, b), sim(stripAl(a), stripAl(b)));
+    return best;
   }
 
   function createSession(expectedRaw, opts) {
@@ -55,6 +71,7 @@
     const status = expected.map(() => 'hidden'); // hidden | ok | shown
     let p = 0;
     const stats = { ok: 0, wrong: 0, skip: 0, shown: 0, accepted: 0 };
+    let lastWrong = null;
 
     function advance(kind, n) {
       for (let k = 0; k < n && p < expected.length; k++) { status[p] = kind; p++; }
@@ -68,8 +85,16 @@
         const w = normalize(raw);
         if (!w) continue;
         const idx = p;
+        // المحرك قسّم كلمة لجزأين: الجزء اللي فات + الحالي
+        if (lastWrong && lastWrong.idx === p) {
+          const joined = lastWrong.raw + raw;
+          if (similarity(joined, expectedRaw[p]) >= Math.max(o.threshold, 0.8)) {
+            stats.wrong = Math.max(0, stats.wrong - 1); lastWrong = null;
+            advance('ok', 1); stats.ok++; events.push({ type: 'ok', idx, spoken: joined, score: 1, split: true }); continue;
+          }
+        }
         const s1 = similarity(raw, expectedRaw[p]);
-        if (s1 >= o.threshold) { advance('ok', 1); stats.ok++; events.push({ type: 'ok', idx, spoken: raw, score: s1 }); continue; }
+        if (s1 >= o.threshold) { lastWrong = null; advance('ok', 1); stats.ok++; events.push({ type: 'ok', idx, spoken: raw, score: s1 }); continue; }
         // المحرك دمج كلمتين في كلمة
         if (p + 1 < expected.length) {
           const merged = expected[p] + expected[p + 1];
@@ -81,7 +106,7 @@
           if (similarity(raw, expectedRaw[p + k]) >= Math.max(o.threshold, 0.8)) { skipTo = p + k; break; }
         }
         if (skipTo > 0) { stats.skip++; events.push({ type: 'skip', idx, spoken: raw, matchedIdx: skipTo }); continue; }
-        stats.wrong++;
+        stats.wrong++; lastWrong = { idx, raw };
         events.push({ type: 'wrong', idx, spoken: raw, score: s1 });
       }
       return events;

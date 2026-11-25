@@ -62,6 +62,11 @@ details{font-size:14px;background:var(--surface);border:1px solid var(--line);bo
   <div class="heard" id="heard"></div>
   <div class="stats" id="stats"></div>
 
+  <details id="dbg"><summary>الكلمات اللي اتعلّمت غلط (للضبط)</summary>
+    <div id="wl" class="note" style="margin-top:8px;line-height:1.9">لسه مفيش.</div>
+    <button id="cp" style="margin-top:8px;min-height:36px;font-size:14px">انسخ القايمة</button>
+  </details>
+
   <details>
     <summary>اختبار من غير مايك</summary>
     <p class="note">اكتب كلمات بالمسافات زي ما المحرك هيسمعها، واضغط إرسال.</p>
@@ -85,7 +90,7 @@ details{font-size:14px;background:var(--surface);border:1px solid var(--line);bo
   });
   const sel=$('sel'); units.forEach((u,i)=>{const o=document.createElement('option');o.value=i;o.textContent=u.label;sel.appendChild(o);});
 
-  let sess, words=[], spans=[], rec=null, fed={}, badTimer=null, threshold=0.72;
+  let wlog=[], sess, words=[], spans=[], rec=null, fed={}, badTimer=null, threshold=0.72;
 
   const toArabicNum=(n)=>String(n).replace(/\d/g,d=>'٠١٢٣٤٥٦٧٨٩'[d]);
 
@@ -110,13 +115,17 @@ details{font-size:14px;background:var(--surface);border:1px solid var(--line);bo
     if(sess.done){ setStatus('خلّصت النطاق.'); stopMic(); }
     const c=spans[sess.pos]; if(c && c.scrollIntoView) c.scrollIntoView({block:'nearest',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});
   }
+  function renderLog(){
+    const w=$('wl'); w.innerHTML=''; wlog.slice(-30).forEach(x=>{ const d=document.createElement('div'); d.textContent='متوقع: '+x.exn+'  |  سمع: '+x.sp+'  |  '+x.sc; w.appendChild(d); });
+  }
+  $('cp').onclick=()=>{ const t=wlog.map(x=>x.exn+' | '+x.sp+' | '+x.sc).join('\n'); if(navigator.clipboard) navigator.clipboard.writeText(t).then(()=>setStatus('اتنسخت.'),()=>setStatus('تعذّر النسخ.')); };
   function setStatus(t){ $('status').textContent=t; }
   function setAlert(on){ $('alert').classList.toggle('on',on); }
 
   function handle(events){
     if(!events.length) return;
     let sawWrong=false;
-    for(const e of events){ if(e.type==='wrong') sawWrong=true; }
+    for(const e of events){ if(e.type==='wrong'){ sawWrong=true; wlog.push({exp:words[e.idx],exn:Matcher.normalize(words[e.idx]),sp:e.spoken,sc:e.score.toFixed(2)}); renderLog(); } }
     render();
     if(sawWrong && !sess.done){
       const c=spans[sess.pos]; c.classList.add('bad'); setAlert(true);
