@@ -64,6 +64,7 @@ details{font-size:14px;background:var(--surface);border:1px solid var(--line);bo
   <div class="stats" id="stats"></div>
 
   <details id="dbg"><summary>الكلمات اللي اتعلّمت غلط (للضبط)</summary>
+    <p class="note" id="trace">حالة المحرك: —</p>
     <div id="wl" class="note" style="margin-top:8px;line-height:1.9">لسه مفيش.</div>
     <button id="cp" style="margin-top:8px;min-height:36px;font-size:14px">انسخ القايمة</button>
   </details>
@@ -73,7 +74,7 @@ details{font-size:14px;background:var(--surface);border:1px solid var(--line);bo
 </div>
 
 <script src="data.js?v=20261125a"></script>
-<script src="recite.js?v=20261125d"></script>
+<script src="recite.js?v=20261125e"></script>
 <script>
 (function(){
   const $ = (id)=>document.getElementById(id);
@@ -95,7 +96,7 @@ details{font-size:14px;background:var(--surface);border:1px solid var(--line);bo
     const u=units[i]; words=[]; const marks=[];
     const refs=[];
     u.verses.forEach((v,vi)=>{ v.split(/\s+/).filter(Boolean).forEach((w,wi)=>{ words.push(w); refs.push({s:u.s,a:vi+1,w:wi+1}); }); marks.push(words.length-1); });
-    rc=LabRecite.createReciter(refs,{render,status:setStatus,mic:updateMic,wordText:k=>words[k],mistake:onMistake,done:()=>setStatus('خلّصت النطاق.')});
+    rc=LabRecite.createReciter(refs,{render,status:setStatus,mic:updateMic,wordText:k=>words[k],trace:showTrace,mistake:onMistake,done:()=>setStatus('خلّصت النطاق.')});
     const page=$('page'); page.innerHTML=''; spans=[];
     let vi=0;
     words.forEach((w,idx)=>{
@@ -119,6 +120,8 @@ details{font-size:14px;background:var(--surface);border:1px solid var(--line);bo
   }
   $('cp').onclick=()=>{ const t=rc.log.map(x=>x.kind+' | '+x.word+' | '+x.expected+' | '+x.observed+' | '+x.conf.toFixed(2)).join('\n'); if(navigator.clipboard) navigator.clipboard.writeText(t).then(()=>setStatus('اتنسخت.'),()=>setStatus('تعذّر النسخ.')); };
   function setStatus(t){ $('status').textContent=t; }
+  const ST={locked:'ماسك المكان',acquiring:'بيدوّر',ambiguous:'متردد',lost:'تاه'};
+  function showTrace(e,k){ const c=e.observed[0]; $('trace').textContent='حالة المحرك: '+(ST[e.state]||e.state)+(c?' · '+c.word.surah+':'+c.word.ayah+':'+c.word.word+(k>=0?' ('+words[k]+')':'')+' · ثقة '+c.confidence.toFixed(2):''); }
   function setAlert(on){ $('alert').classList.toggle('on',on); }
 
   function onMistake(err){

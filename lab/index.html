@@ -124,11 +124,12 @@ input[type=text]{flex:1;min-width:0}
   <div class="note" id="stats">—</div>
   <div id="wl"><div>لسه مفيش كلمات اتعلّمت غلط.</div></div>
   <div class="row"><button class="sbtn" id="cp">انسخ القايمة</button></div>
+  <p class="note" id="trace" dir="rtl">حالة المحرك: —</p>
   <p class="note" id="eng">محرك الصوت: Tilawa، بيشتغل على جهازك والصوت مش بيتبعت. أول مرة بيحمّل 25 لـ 68 ميجا وبعدها بيشتغل من غير نت.</p>
   <p class="note">الموديل: Tilawa (CC BY 4.0)، متدرّب على tlog من Tarteel وQUA من QUD Technologies.</p>
 </section>
 
-<script src="recite.js?v=20261125d"></script>
+<script src="recite.js?v=20261125e"></script>
 <script src="mushaf.js?v=20261125c"></script>
 <script src="quarters.js?v=20261125c"></script>
 <script>
@@ -198,7 +199,7 @@ input[type=text]{flex:1;min-width:0}
       stage.appendChild(pg); pageEls.set(p,pg);
     });
     const refs=rngWords.map(g=>{ const w=idx.words[g]; return {s:w.s,a:w.a,w:g-idx.verseFirst[w.s+':'+w.a]+1}; });
-    rc=LabRecite.createReciter(refs,{render,status:toast,mic:updateMic,wordText:k=>spanText(rngWords[k]),mistake:onMistake,done:()=>toast('خلّصت النطاق، ما شاء الله.')});
+    rc=LabRecite.createReciter(refs,{render,status:toast,mic:updateMic,wordText:k=>spanText(rngWords[k]),trace:showTrace,mistake:onMistake,done:()=>toast('خلّصت النطاق، ما شاء الله.')});
     renderLog(); setAlert(false);
     closeSheets(); toast('بحمّل خط المصحف...');
     loadFonts(pageList.map(p=>data.pages[p-1].f)).then(ok=>{ if(!ok) toast('تعذّر تحميل خط المصحف، هعرض بخط بديل.'); else toast('جاهز. اضغط زرار المايك وابدأ.'); showPage(0); render(); });
@@ -253,6 +254,8 @@ input[type=text]{flex:1;min-width:0}
     // انتقال تلقائي للصفحة اللي فيها الكلمة الحالية
     const p=idx.words[rngWords[t.pos]].p, i=pageList.indexOf(p); if(i>=0&&i!==cur) showPage(i);
   }
+  const ST={locked:'ماسك المكان',acquiring:'بيدوّر',ambiguous:'متردد',lost:'تاه'};
+  function showTrace(e,k){ const c=e.observed[0]; $('trace').textContent='حالة المحرك: '+(ST[e.state]||e.state)+(c?' · '+c.word.surah+':'+c.word.ayah+':'+c.word.word+(k>=0?' ('+spanText(rngWords[k])+')':'')+' · ثقة '+c.confidence.toFixed(2):''); }
   function setAlert(on){ $('alert').classList.toggle('on',on); $('show').style.display=on?'none':''; }
   function renderLog(){ const w=$('wl'); const L=rc?rc.log:[]; w.innerHTML=''; L.slice(-30).forEach(x=>{ const d=document.createElement('div'); d.textContent=x.kind+': '+x.word+'  |  متوقع: '+x.expected+'  |  سمع: '+x.observed+'  |  '+x.conf.toFixed(2); w.appendChild(d); }); if(!L.length) w.innerHTML='<div>لسه مفيش أخطاء.</div>'; }
 

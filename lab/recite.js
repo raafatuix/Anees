@@ -8,6 +8,10 @@
   const BUNDLE = 'vendor/tilawa-web.js?v=1.0.0-rc.1';
   const KIND = { wrong_word: 'كلمة غلط', omitted_word: 'كلمة ناقصة', added_word: 'كلمة زيادة', skipped_passage: 'تخطّي جزء' };
   const SKIP_GAP = 3; // لو القفزة لقدّام أكتر من كده، الكلمات اللي في النص متتحسبش صح
+  // المحرك مش بيقفل على المكان غير بعد كلمتين على الأقل (minWords = 2 في tracker).
+  // فقبل القفل: لو أقوى المرشحين هو الكلمة الحالية أو اللي بعدها، نكشفها على طول.
+  // ده بيحل الكلمة اللي بتتقال لوحدها، والحروف المقطّعة في أول السورة (الم، حم…).
+  const TENTATIVE = { conf: 0.5, ahead: 1, top: 3 };
 
   let libP = null, tilawaP = null;
   function lib() { return libP || (libP = import(new URL(BUNDLE, document.baseURI).href)); }
@@ -105,8 +109,16 @@
 
     function onEvent(e) {
       if (e.type === 'position') {
-        if (e.state !== 'locked' || !e.observed[0]) return;
-        const k = at(e.observed[0].word);
+        ui.trace && ui.trace(e, e.observed[0] ? at(e.observed[0].word) : -1);
+        if (e.state === 'lost' || !e.observed[0]) return;
+        let k = -1;
+        if (e.state === 'locked') k = at(e.observed[0].word);
+        else {
+          for (const c of e.observed.slice(0, TENTATIVE.top)) {
+            const j = at(c.word);
+            if (j >= track.pos && j <= track.pos + TENTATIVE.ahead && c.confidence >= TENTATIVE.conf) { k = j; break; }
+          }
+        }
         if (k >= 0 && track.advanceTo(k)) ui.render();
         if (track.done) { stop(); ui.done && ui.done(); return; }
         if (want && segs[seg] && track.pos > segs[seg].end) nextSegment();
@@ -145,7 +157,7 @@
         }
         if (!want) return;
         await openSegment();
-        ui.status('بسمعك. ابدأ من الكلمة المعلّمة.');
+        ui.status('بسمعك. اقرأ على طول، الكلمة بتظهر بعد ما تقولها بلحظة.');
       } catch (err) { fail(err); }
       finally { busy = false; }
     }
