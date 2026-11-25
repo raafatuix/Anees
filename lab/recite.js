@@ -12,6 +12,9 @@
   // فقبل القفل: لو أقوى المرشحين هو الكلمة الحالية أو اللي بعدها، نكشفها على طول.
   // ده بيحل الكلمة اللي بتتقال لوحدها، والحروف المقطّعة في أول السورة (الم، حم…).
   const TENTATIVE = { conf: 0.5, ahead: 1, top: 3 };
+  // القفزة لقدّام أكتر من SKIP_GAP متتصدقش من أول حدث (المحرك ممكن يتلخبط بعد كلمة غلط).
+  // بتتقبل لو المحرك أكّد skipped_passage، أو سمع القارئ مكمّل من المكان الجديد.
+  const JUMP_CONFIRM = 2; // كلمات تقدّم بعد مكان القفزة
 
   let libP = null, tilawaP = null;
   function lib() { return libP || (libP = import(new URL(BUNDLE, document.baseURI).href)); }
@@ -28,6 +31,7 @@
     const stats = { ok: 0, wrong: 0, shown: 0, accepted: 0, skipped: 0 };
     const byId = new Map(); // checker id → index
     const sus = new Set();
+    const opened = new Set(); // كلمات غلط اتكشفت بـ «أظهر الكلمة»
     let pos = 0, lastErr = null;
 
     function set(i, s) {
@@ -49,8 +53,10 @@
       if (e.state === 'resolved' || e.state === 'uncertain') {
         if (known !== undefined) {
           sus.delete(known);
-          if (status[known] === 'err') { set(known, known < pos ? 'ok' : 'hidden'); stats.wrong = Math.max(0, stats.wrong - 1); }
+          // صحّح نفسه: الكلمة تظهر صح
+          if (status[known] === 'err') { set(known, known < pos ? 'ok' : 'hidden'); opened.delete(known); stats.wrong = Math.max(0, stats.wrong - 1); }
           byId.delete(e.id);
+          if (lastErr && lastErr.id === e.id) lastErr = null;
         }
         return null;
       }
@@ -70,12 +76,13 @@
       stats.wrong = Math.max(0, stats.wrong - 1); stats.accepted++;
       return k;
     }
-    // «أظهر الكلمة»: تتكشف الكلمة الحالية ونعدّي عليها
+    // «أظهر الكلمة»: لو فيه كلمة غلط لسه مخفية تتكشف هي، وإلا الكلمة الحالية
     function reveal() {
+      if (lastErr && lastErr.k >= 0 && status[lastErr.k] === 'err' && !opened.has(lastErr.k)) { opened.add(lastErr.k); stats.shown++; return lastErr.k; }
       if (pos >= n) return null;
       const i = pos; if (status[i] === 'hidden') { set(i, 'shown'); stats.shown++; } pos++; return i;
     }
-    return { status, stats, sus, advanceTo, checker, accept, reveal, get pos() { return pos; }, set pos(v) { pos = v; }, get done() { return pos >= n; }, get lastErr() { return lastErr; } };
+    return { status, stats, sus, opened, advanceTo, checker, accept, reveal, get pos() { return pos; }, set pos(v) { pos = v; }, get done() { return pos >= n; }, get lastErr() { return lastErr; } };
   }
 
   /* refs[i] = {s, a, w} لكل كلمة في النطاق بالترتيب (w من 1) */
@@ -90,7 +97,7 @@
     const segs = [];
     refs.forEach((r, i) => { const L = segs[segs.length - 1]; if (L && L.s === r.s) L.end = i; else segs.push({ s: r.s, start: i, end: i }); });
 
-    let tilawa = null, session = null, mic = null, want = false, busy = false, seg = -1;
+    let tilawa = null, session = null, mic = null, want = false, busy = false, seg = -1, jump = null;
     const log = [];
 
     function segOf(i) { return segs.findIndex(g => i >= g.start && i <= g.end); }
@@ -119,11 +126,20 @@
             if (j >= track.pos && j <= track.pos + TENTATIVE.ahead && c.confidence >= TENTATIVE.conf) { k = j; break; }
           }
         }
+        if (k >= 0 && e.state === 'locked' && k - track.pos > SKIP_GAP) {
+          // قفزة بعيدة: نستنى تأكيد
+          if (!jump || k < jump.k) jump = { k, first: k };
+          else jump.k = k;
+          if (jump.k - jump.first >= JUMP_CONFIRM) { const t = jump.k; jump = null; if (track.advanceTo(t)) ui.render(); }
+          return;
+        }
+        if (k >= 0) jump = null;
         if (k >= 0 && track.advanceTo(k)) ui.render();
         if (track.done) { stop(); ui.done && ui.done(); return; }
         if (want && segs[seg] && track.pos > segs[seg].end) nextSegment();
       } else if (e.type === 'checker') {
         const k = at(e.location);
+        if (e.errorClass === 'skipped_passage' && e.state === 'confirmed' && jump) { const t = jump.k; jump = null; track.advanceTo(t); }
         const err = track.checker(e, k);
         if (err) {
           log.push({ word: k >= 0 ? ui.wordText(k) : '—', kind: err.kind, expected: e.expected || '', observed: e.observed || '', conf: e.confidence });

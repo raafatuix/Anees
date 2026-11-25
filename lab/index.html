@@ -35,7 +35,9 @@ button{font:inherit;color:inherit;cursor:pointer}
 .w.shown{color:inherit;background:#fff3d6}
 .w.cur{box-shadow:inset 0 -3px 0 var(--primary)}
 .w.err{color:var(--warn);box-shadow:inset 0 -3px 0 var(--warn);background:var(--warn-soft)}
-.w.skip{color:#c98a84;background:var(--warn-soft)}
+.w.skip{color:#c98a84;box-shadow:inset 0 -3px 0 #e8a29b}
+.hide .w.err,.hide .w.skip{color:transparent;user-select:none}
+.hide .w.err.open{color:var(--warn)}
 .w.sus{box-shadow:inset 0 -3px 0 #e0a100}
 .w.bad{animation:sh .35s}
 @keyframes sh{25%{transform:translateX(4px)}75%{transform:translateX(-4px)}}
@@ -129,7 +131,7 @@ input[type=text]{flex:1;min-width:0}
   <p class="note">الموديل: Tilawa (CC BY 4.0)، متدرّب على tlog من Tarteel وQUA من QUD Technologies.</p>
 </section>
 
-<script src="recite.js?v=20261125e"></script>
+<script src="recite.js?v=20261125f"></script>
 <script src="mushaf.js?v=20261125c"></script>
 <script src="quarters.js?v=20261125c"></script>
 <script>
@@ -247,16 +249,16 @@ input[type=text]{flex:1;min-width:0}
   function render(){
     if(!rc) return; const t=rc.track;
     $('stage').classList.toggle('hide',hideOn);
-    spans.forEach((s,i)=>{ if(!s) return; s.classList.remove('hidden','ok','shown','err','skip','cur','sus'); s.classList.add(t.status[i]); if(t.sus.has(i)) s.classList.add('sus'); if(i===t.pos&&!t.done) s.classList.add('cur'); });
+    spans.forEach((s,i)=>{ if(!s) return; s.classList.remove('hidden','ok','shown','err','skip','cur','sus','open'); s.classList.add(t.status[i]); if(t.sus.has(i)) s.classList.add('sus'); if(t.opened.has(i)) s.classList.add('open'); if(i===t.pos&&!t.done) s.classList.add('cur'); });
     const st=t.stats; $('stats').textContent='صح: '+st.ok+' · أخطاء: '+st.wrong+' · أُظهرت: '+st.shown+' · "كنت صح": '+st.accepted+' · المتبقي: '+(rngWords.length-t.pos);
-    renderLog();
+    renderLog(); if(!t.lastErr) setAlert(false);
     if(t.done) return;
     // انتقال تلقائي للصفحة اللي فيها الكلمة الحالية
     const p=idx.words[rngWords[t.pos]].p, i=pageList.indexOf(p); if(i>=0&&i!==cur) showPage(i);
   }
   const ST={locked:'ماسك المكان',acquiring:'بيدوّر',ambiguous:'متردد',lost:'تاه'};
   function showTrace(e,k){ const c=e.observed[0]; $('trace').textContent='حالة المحرك: '+(ST[e.state]||e.state)+(c?' · '+c.word.surah+':'+c.word.ayah+':'+c.word.word+(k>=0?' ('+spanText(rngWords[k])+')':'')+' · ثقة '+c.confidence.toFixed(2):''); }
-  function setAlert(on){ $('alert').classList.toggle('on',on); $('show').style.display=on?'none':''; }
+  function setAlert(on){ $('alert').classList.toggle('on',on); }
   function renderLog(){ const w=$('wl'); const L=rc?rc.log:[]; w.innerHTML=''; L.slice(-30).forEach(x=>{ const d=document.createElement('div'); d.textContent=x.kind+': '+x.word+'  |  متوقع: '+x.expected+'  |  سمع: '+x.observed+'  |  '+x.conf.toFixed(2); w.appendChild(d); }); if(!L.length) w.innerHTML='<div>لسه مفيش أخطاء.</div>'; }
 
   let badTimer=null;
@@ -274,7 +276,7 @@ input[type=text]{flex:1;min-width:0}
 
   $('mic').onclick=()=>rc&&rc.listening?stopMic():startMic();
   $('go').onclick=start;
-  $('show').onclick=()=>{ if(!rc||rc.track.done) return; rc.reveal(); setAlert(false); };
+  $('show').onclick=()=>{ if(!rc) return; rc.reveal(); setAlert(false); };
   $('accept').onclick=()=>{ if(!rc) return; rc.accept(); setAlert(false); };
   $('cp').onclick=()=>{ const t=(rc?rc.log:[]).map(x=>x.kind+' | '+x.word+' | '+x.expected+' | '+x.observed+' | '+x.conf.toFixed(2)).join('\n'); if(navigator.clipboard) navigator.clipboard.writeText(t).then(()=>toast('اتنسخت.'),()=>toast('تعذّر النسخ.')); };
   window.__lab={get rc(){return rc}};

@@ -26,8 +26,9 @@ button:disabled{opacity:.45}
 .w.ok{color:var(--primary)}
 .w.shown{color:#8a5a00;background:#fff3d6}
 .w.cur{outline:2px solid var(--primary);outline-offset:2px}
-.w.err{color:var(--warn);background:var(--warn-soft);outline:2px solid var(--warn)}
-.w.skip{color:#c98a84;background:var(--warn-soft)}
+.w.err{color:transparent;background:var(--warn-soft);outline:2px solid var(--warn);user-select:none;min-width:34px}
+.w.err.open{color:var(--warn)}
+.w.skip{color:transparent;background:var(--warn-soft);outline:2px dashed #e8a29b;user-select:none;min-width:34px}
 .w.sus{outline:2px dashed #e0a100}
 .w.bad{animation:sh .35s}
 @keyframes sh{25%{transform:translateX(5px)}75%{transform:translateX(-5px)}}
@@ -44,7 +45,7 @@ details{font-size:14px;background:var(--surface);border:1px solid var(--line);bo
 <body>
 <div class="wrap">
   <h1>تجربة الكشف بالصوت</h1>
-  <p class="note">الصفحة مخفية. اقرأ بصوتك: كل كلمة صح تظهر. الكلمة الغلط أو الناقصة تظهر بالأحمر. لو مش عارف الكلمة اضغط «أظهر الكلمة». المحرك (Tilawa) بيشتغل على جهازك.</p>
+  <p class="note">الصفحة مخفية. اقرأ بصوتك: كل كلمة صح تظهر. الكلمة الغلط أو الناقصة بتتعلّم بالأحمر وتفضل مخفية: قولها صح تظهر، أو اضغط «أظهر الكلمة». لو مش عارف الكلمة اضغط «أظهر الكلمة». المحرك (Tilawa) بيشتغل على جهازك.</p>
 
   <div class="row">
     <select id="sel" aria-label="النطاق"></select>
@@ -74,7 +75,7 @@ details{font-size:14px;background:var(--surface);border:1px solid var(--line);bo
 </div>
 
 <script src="data.js?v=20261125a"></script>
-<script src="recite.js?v=20261125e"></script>
+<script src="recite.js?v=20261125f"></script>
 <script>
 (function(){
   const $ = (id)=>document.getElementById(id);
@@ -108,10 +109,10 @@ details{font-size:14px;background:var(--surface);border:1px solid var(--line);bo
 
   function render(){
     const t=rc.track;
-    spans.forEach((s,i)=>{ s.classList.remove('hidden','ok','shown','err','skip','cur','sus'); s.classList.add(t.status[i]); if(t.sus.has(i)) s.classList.add('sus'); if(i===t.pos && !t.done) s.classList.add('cur'); });
+    spans.forEach((s,i)=>{ s.classList.remove('hidden','ok','shown','err','skip','cur','sus','open'); s.classList.add(t.status[i]); if(t.sus.has(i)) s.classList.add('sus'); if(t.opened.has(i)) s.classList.add('open'); if(i===t.pos && !t.done) s.classList.add('cur'); });
     const st=t.stats;
     $('stats').textContent='صح: '+st.ok+' · أخطاء: '+st.wrong+' · أُظهرت: '+st.shown+' · "كنت صح": '+st.accepted+' · المتبقي: '+(words.length-t.pos);
-    renderLog();
+    renderLog(); if(!t.lastErr) setAlert(false);
     const c=spans[t.pos]; if(c && c.scrollIntoView) c.scrollIntoView({block:'nearest',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});
   }
   function renderLog(){
@@ -137,7 +138,7 @@ details{font-size:14px;background:var(--surface);border:1px solid var(--line);bo
   function updateMic(on){ const b=$('mic'); b.textContent=on?'إيقاف':'ابدأ القراءة بالمايك'; b.classList.toggle('rec',!!on); b.classList.toggle('primary',!on); }
 
   $('mic').onclick=()=>rc&&rc.listening?stopMic():startMic();
-  $('show').onclick=()=>{ if(rc.track.done) return; rc.reveal(); setAlert(false); };
+  $('show').onclick=()=>{ rc.reveal(); setAlert(false); };
   $('accept').onclick=()=>{ rc.accept(); setAlert(false); };
   $('restart').onclick=()=>load(sel.value);
   sel.onchange=()=>load(sel.value);
