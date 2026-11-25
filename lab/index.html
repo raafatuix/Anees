@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>تجربة الكشف بالصوت</title>
+<meta name="robots" content="noindex">
+<style>
+@font-face{font-family:'AmiriQuran';src:url('amiri-quran.woff2') format('woff2');font-display:swap}
+:root{--bg:#faf7f0;--surface:#fff;--text:#1d2b25;--muted:#6b766f;--primary:#1f6b4f;--primary-soft:#e3f0ea;--warn:#b3261e;--warn-soft:#fbe9e7;--line:#e4dfd2;--hid:#d9d3c3}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Tahoma,sans-serif;padding:env(safe-area-inset-top) 16px calc(env(safe-area-inset-bottom) + 16px)}
+.wrap{max-width:560px;margin:0 auto;display:flex;flex-direction:column;gap:12px;padding-top:16px}
+h1{font-size:18px;margin:0}
+.note{font-size:13px;color:var(--muted);margin:0}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+select,input[type=text]{font:inherit;padding:10px;border:1px solid var(--line);border-radius:12px;background:var(--surface);min-height:44px}
+input[type=text]{flex:1;min-width:0}
+button{font:inherit;min-height:44px;padding:0 16px;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--text);cursor:pointer}
+button.primary{background:var(--primary);color:#fff;border-color:var(--primary)}
+button.rec{background:var(--warn);border-color:var(--warn);color:#fff}
+button:disabled{opacity:.45}
+.page{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:20px 16px;font-family:'AmiriQuran','Amiri',serif;font-size:28px;line-height:2.4;text-align:justify;min-height:240px}
+.w{display:inline-block;margin:0 3px;padding:0 3px;border-radius:8px;transition:all .25s}
+.w.hidden{color:transparent;background:var(--hid);opacity:.7;user-select:none;min-width:34px}
+.w.ok{color:var(--primary)}
+.w.shown{color:#8a5a00;background:#fff3d6}
+.w.cur{outline:2px solid var(--primary);outline-offset:2px}
+.w.bad{background:var(--warn-soft);outline:2px solid var(--warn);animation:sh .35s}
+@keyframes sh{25%{transform:translateX(5px)}75%{transform:translateX(-5px)}}
+.vend{display:inline-block;font-size:18px;color:var(--muted);margin:0 2px}
+.alert{background:var(--warn-soft);color:var(--warn);border-radius:12px;padding:10px 12px;font-size:15px;display:none;align-items:center;justify-content:space-between;gap:8px}
+.alert.on{display:flex}
+.alert button{min-height:36px;padding:0 12px;font-size:14px}
+.status{font-size:14px;color:var(--muted);min-height:20px}
+.heard{font-size:14px;color:var(--muted);min-height:20px;direction:rtl}
+.stats{display:flex;gap:12px;font-size:13px;color:var(--muted);flex-wrap:wrap}
+details{font-size:14px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+@media (prefers-reduced-motion:reduce){.w,.w.bad{animation:none;transition:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>تجربة الكشف بالصوت</h1>
+  <p class="note">الصفحة مخفية. اقرأ بصوتك: كل كلمة صح تظهر. كلمة غلط تطلع تنبيه من غير ما تظهر. لو مش عارفها اضغط «أظهر الكلمة».</p>
+
+  <div class="row">
+    <select id="sel" aria-label="النطاق"></select>
+    <button id="restart">من الأول</button>
+  </div>
+
+  <div class="row">
+    <button id="mic" class="primary" style="flex:1">ابدأ القراءة بالمايك</button>
+    <button id="show">أظهر الكلمة</button>
+  </div>
+
+  <div id="alert" class="alert" role="alert"><span>الكلمة دي غلط</span><button id="accept">كنت صح</button></div>
+  <div class="status" id="status"></div>
+
+  <div class="page" id="page" aria-live="polite"></div>
+
+  <div class="heard" id="heard"></div>
+  <div class="stats" id="stats"></div>
+
+  <details>
+    <summary>اختبار من غير مايك</summary>
+    <p class="note">اكتب كلمات بالمسافات زي ما المحرك هيسمعها، واضغط إرسال.</p>
+    <div class="row"><input type="text" id="sim" placeholder="مثال: الحمد لله رب"><button id="simGo">إرسال</button></div>
+    <p class="note" style="margin-top:10px">درجة التساهل: <span id="thv">0.72</span></p>
+    <input type="range" id="th" min="0.5" max="0.95" step="0.01" value="0.72" style="width:100%">
+  </details>
+</div>
+
+<script src="data.js"></script>
+<script src="matcher.js"></script>
+<script>
+(function(){
+  const $ = (id)=>document.getElementById(id);
+  const DATA = window.LAB_DATA || globalThis.LAB_DATA;
+  // وحدات التجربة: كل سورة، وللكهف والملك مقاطع
+  const units = [];
+  DATA.forEach(s=>{
+    units.push({label:'سورة '+s.name+' (كاملة في التجربة)', verses:s.verses});
+    if(s.verses.length>=10) units.push({label:'سورة '+s.name+' — أول 5 آيات', verses:s.verses.slice(0,5)});
+  });
+  const sel=$('sel'); units.forEach((u,i)=>{const o=document.createElement('option');o.value=i;o.textContent=u.label;sel.appendChild(o);});
+
+  let sess, words=[], spans=[], listening=false, rec=null, fed={}, badTimer=null, threshold=0.72;
+
+  const toArabicNum=(n)=>String(n).replace(/\d/g,d=>'٠١٢٣٤٥٦٧٨٩'[d]);
+
+  function load(i){
+    stopMic();
+    const u=units[i]; words=[]; const marks=[];
+    u.verses.forEach((v,vi)=>{ v.split(/\s+/).filter(Boolean).forEach(w=>words.push(w)); marks.push(words.length-1); });
+    sess=Matcher.createSession(words,{threshold});
+    const page=$('page'); page.innerHTML=''; spans=[];
+    let vi=0;
+    words.forEach((w,idx)=>{
+      const s=document.createElement('span'); s.className='w hidden'; s.textContent=w; page.appendChild(s); spans.push(s);
+      if(marks[vi]===idx){ const e=document.createElement('span'); e.className='vend'; e.textContent='﴿'+toArabicNum(vi+1)+'﴾'; page.appendChild(e); vi++; }
+    });
+    fed={}; render(); setAlert(false); $('heard').textContent=''; setStatus('جاهز. اضغط ابدأ القراءة.');
+  }
+
+  function render(){
+    spans.forEach((s,i)=>{ s.classList.remove('hidden','ok','shown','cur'); s.classList.add(sess.status[i]); if(i===sess.pos && !sess.done) s.classList.add('cur'); });
+    const st=sess.stats;
+    $('stats').textContent='صح: '+st.ok+' · غلط: '+st.wrong+' · أُظهرت: '+st.shown+' · "كنت صح": '+st.accepted+' · المتبقي: '+(words.length-sess.pos);
+    if(sess.done){ setStatus('خلّصت النطاق.'); stopMic(); }
+    const c=spans[sess.pos]; if(c && c.scrollIntoView) c.scrollIntoView({block:'nearest',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});
+  }
+  function setStatus(t){ $('status').textContent=t; }
+  function setAlert(on){ $('alert').classList.toggle('on',on); }
+
+  function handle(events){
+    if(!events.length) return;
+    let sawWrong=false;
+    for(const e of events){ if(e.type==='wrong') sawWrong=true; }
+    render();
+    if(sawWrong && !sess.done){
+      const c=spans[sess.pos]; c.classList.add('bad'); setAlert(true);
+      clearTimeout(badTimer); badTimer=setTimeout(()=>c.classList.remove('bad'),700);
+    } else if(events.some(e=>e.type==='ok')) setAlert(false);
+  }
+  function feedWords(arr){ if(!arr.length||sess.done) return; $('heard').textContent='سمعت: '+arr.join(' '); handle(sess.feed(arr)); }
+
+  // المايك
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  function startMic(){
+    if(!SR){ setStatus('المتصفح ده مش بيدعم التعرف على الصوت. جرّب Chrome، أو استخدم الاختبار بدون مايك.'); return; }
+    rec=new SR(); rec.lang='ar-SA'; rec.continuous=true; rec.interimResults=true; rec.maxAlternatives=1;
+    fed={};
+    rec.onresult=(ev)=>{
+      for(let i=ev.resultIndex;i<ev.results.length;i++){
+        const r=ev.results[i]; const ws=r[0].transcript.trim().split(/\s+/).filter(Boolean);
+        const done=fed[i]||0;
+        // في النتيجة المؤقتة آخر كلمة ممكن تتغير، فنستنى لحد ما تكتمل
+        const upto=r.isFinal?ws.length:Math.max(0,ws.length-1);
+        if(upto>done){ feedWords(ws.slice(done,upto)); fed[i]=upto; }
+      }
+    };
+    rec.onerror=(e)=>{ if(e.error==='not-allowed'||e.error==='service-not-allowed'){ setStatus('المايك مش مسموح. فعّل الإذن من إعدادات المتصفح.'); listening=false; updateMic(); } else if(e.error!=='no-speech'&&e.error!=='aborted'){ setStatus('خطأ في الصوت: '+e.error); } };
+    rec.onend=()=>{ if(listening){ fed={}; try{rec.start();}catch(_){} } };
+    try{ rec.start(); listening=true; setStatus('بسمعك. ابدأ من الكلمة المعلّمة.'); }catch(_){ setStatus('تعذّر تشغيل المايك.'); }
+    updateMic();
+  }
+  function stopMic(){ listening=false; if(rec){ try{rec.onend=null;rec.stop();}catch(_){} rec=null; } updateMic(); }
+  function updateMic(){ const b=$('mic'); b.textContent=listening?'إيقاف':'ابدأ القراءة بالمايك'; b.classList.toggle('rec',listening); b.classList.toggle('primary',!listening); }
+
+  $('mic').onclick=()=>listening?stopMic():startMic();
+  $('show').onclick=()=>{ if(sess.done) return; sess.reveal(); setAlert(false); render(); };
+  $('accept').onclick=()=>{ sess.accept(); setAlert(false); render(); };
+  $('restart').onclick=()=>load(sel.value);
+  sel.onchange=()=>load(sel.value);
+  $('simGo').onclick=()=>{ const v=$('sim').value.trim(); if(!v) return; feedWords(v.split(/\s+/)); $('sim').value=''; };
+  $('sim').addEventListener('keydown',e=>{ if(e.key==='Enter') $('simGo').click(); });
+  $('th').oninput=(e)=>{ threshold=+e.target.value; $('thv').textContent=threshold.toFixed(2); sess.threshold(threshold); };
+
+  window.__lab={ get sess(){return sess}, load };
+  load(0);
+})();
+</script>
+</body>
+</html>
